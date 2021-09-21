@@ -24,7 +24,7 @@ jobs:
               git pull origin master
               rm -rf node_modules/
               npm update
-              pm2 start bot.js
-              pm2 restart bot
+              pm2 start jukebox.js
+              pm2 restart jukebox
               pm2 save
               echo "Deploy to Digital Ocean Droplet successful."
