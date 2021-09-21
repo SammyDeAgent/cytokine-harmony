@@ -12,7 +12,7 @@ dotenv.config();
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
 const clientId  = '';  //Discord Application Client ID
-const guildId   = '421763216205414400';  //Discord Server ID **Reminder - put this in a seperate file for all the servers that utilize it
+const guildId   = '421763216205414400';  //Discord Server ID **Reminder - put this in a seperate file for all the servers that utilize it -Sammy
 
 const PREFIX ='%';
 var servers = {};
