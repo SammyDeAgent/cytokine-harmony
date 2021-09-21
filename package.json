@@ -1,9 +1,11 @@
 {
   "dependencies": {
+    "@discordjs/voice": "^0.6.0",
     "discord": "^0.8.2",
     "discord.js": "^13.1.0",
     "dotenv": "^10.0.0",
     "fs": "^0.0.1-security",
+    "libsodium-wrappers": "^0.7.9",
     "nodemon": "^2.0.12",
     "opusscript": "^0.0.8",
     "ytdl-core": "^4.9.1"

@@ -1,7 +1,15 @@
 
 //Module Load
-const Discord = require('discord.js');
-const { Client, Intents, Collection } = require('discord.js');
+const {Client, Intents, VoiceChannel} = require('discord.js');
+const {
+	joinVoiceChannel,
+	createAudioPlayer,
+	createAudioResource,
+	entersState,
+	StreamType,
+	AudioPlayerStatus,
+	VoiceConnectionStatus,
+} = require('@discordjs/voice');
 const dotenv = require("dotenv");
 const fs = require('fs');
 const ytdl = require("ytdl-core");
@@ -9,7 +17,18 @@ const ytdl = require("ytdl-core");
 dotenv.config();
 
 //Variable Initialization
-const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
+const client = new Client(
+    { 
+        intents: [ 
+            "GUILDS",
+            "GUILD_MESSAGES",
+            "DIRECT_MESSAGES"
+        ],
+        partials: [
+            "CHANNEL"
+        ] 
+    }
+);
 
 const clientId  = '';  //Discord Application Client ID
 const guildId   = '421763216205414400';  //Discord Server ID **Reminder - put this in a seperate file for all the servers that utilize it -Sammy
@@ -29,70 +48,110 @@ for (const file of eventFiles) {
 }
 
 //Need to install FFmpeg on linux and fix the following code -Sammy
-client.on('message',message =>{
+// client.on('message',message =>{
 
+//     let args = message.content.substring(PREFIX.length).split(" ");
+//     switch(args[0]){
+//         case 'play':
+            
+//             function play(connection,message){
+//                 var server = servers[message.guild.id];
+
+//                 server.dispatcher = connection.playStream(ytdl(server.queue[0],{filter: 'audioonly'}));
+//                 server.queue.shift();
+//                 server.dispatcher.on("end",function(){
+//                     if(server.queue[0]){
+//                         play(connection,message);
+//                     }else {
+//                         connection.disconnect();
+//                     }
+//                 });
+
+//             }
+
+//             if(!args[1]){
+//                 message.channel.send("you need to provide a link");
+//                 return;
+//             }
+
+//             if(!message.member.voice.channel){
+//                 message.channel.send("you must be in a channel to play the bot !");
+//                 return;
+//             }
+
+//             if(!servers[message.guild.id]) servers[message.guild.id]={
+//                 queue :[]
+//             }
+//             var server = servers[message.guild.id];
+
+//             server.queue.push(args[1]);
+
+//             if(!message.guild.voiceConnection) 
+//             message.member.voice.channel.join().then(function(connection){
+//                 play(connection,message);
+//             })
+
+//             break;
+//         case 'skip':
+//                 var server = servers[message.guild.id];
+//                 if(server.dispatcher) server.dispatcher.end();
+//                 message.channel.send("song skipped")
+//         break;
+
+//         case 'stop':
+//                 var server = servers[message.guild.id];
+//                 if(message.guild.voiceConnection){
+//                     for(var i=server.queue.length -2;i>=0;i--){
+//                         server.queue.splice(i,1);
+//                     }
+//                     server.dispatcher.end();
+//                     message.channel.send("Ending the queue leaving the voice channel")
+//                     console.log('stopped the queue')
+//                 }
+//                 if(message.guild.connection) message.guild.voiceConnection.disconnect();
+        
+//         break;
+//     }
+// })
+
+//Alpha
+client.on('messageCreate', async message =>{
+    if(message.author.bot) return;
+    if(!message.member.voice.channel) return;
+    const connection = joinVoiceChannel({
+        channelId: message.member.voice.channel.id,
+        guildId: message.guild.id,
+        adapterCreator: message.guild.voiceAdapterCreator
+    });
+    const player = createAudioPlayer();
+    const subscription = connection.subscribe(player);
     let args = message.content.substring(PREFIX.length).split(" ");
     switch(args[0]){
         case 'play':
-            
-            function play(connection,message){
-                var server = servers[message.guild.id];
-
-                server.dispatcher = connection.playStream(ytdl(server.queue[0],{filter: 'audioonly'}));
-                server.queue.shift();
-                server.dispatcher.on("end",function(){
-                    if(server.queue[0]){
-                        play(connection,message);
-                    }else {
-                        connection.disconnect();
-                    }
-                });
-
-            }
-
-            if(!args[1]){
-                message.channel.send("you need to provide a link");
-                return;
-            }
-            if(!message.member.voiceChannel){
-                message.channel.send("you must be in a channel to play the bot !");
-                return;
-            }
-
-            if(!servers[message.guild.id]) servers[message.guild.id]={
-                queue :[]
-            }
-            var server = servers[message.guild.id];
-
-            server.queue.push(args[1]);
-
-            if(!message.guild.voiceConnection) 
-            message.member.voiceChannel.join().then(function(connection){
-                play(connection,message);
-            })
-
+            player.play(createAudioResource('./mp3/01.mp3'));
+            message.reply("Playing required music.");
             break;
-        case 'skip':
-                var server = servers[message.guild.id];
-                if(server.dispatcher) server.dispatcher.end();
-                message.channel.send("song skipped")
-        break;
-
         case 'stop':
-                var server = servers[message.guild.id];
-                if(message.guild.voiceConnection){
-                    for(var i=server.queue.length -2;i>=0;i--){
-                        server.queue.splice(i,1);
-                    }
-                    server.dispatcher.end();
-                    message.channel.send("Ending the queue leaving the voice channel")
-                    console.log('stopped the queue')
-                }
-                if(message.guild.connection) message.guild.voiceConnection.disconnect();
-        
-        break;
+            player.stop();
+            connection.destroy();
+            message.reply("Have a nice day.");
+            break;
     }
+    player.on(AudioPlayerStatus.Idle, ()=>{
+        player.stop();
+        connection.destroy();
+    })
 })
+
+//Testing
+client.on('message', async message => {
+    if(message.author.bot) return;
+    if (message.content === 'Hello there') {
+        message.channel.send("General Kenobi");
+    }
+});
+
+
 
 //Client Setup
 client.login(process.env.TOKEN);
