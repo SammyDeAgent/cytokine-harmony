@@ -4,16 +4,18 @@ const Discord = require('discord.js');
 const { Client, Intents, Collection } = require('discord.js');
 const dotenv = require("dotenv");
 const fs = require('fs');
+const ytdl = require("ytdl-core");
 
 dotenv.config();
 
+//Variable Initialization
 const client = new Client({ intents: [Intents.FLAGS.GUILDS] });
 
-const token = 'ODg5ODIzMDMyMTU0MTU3MDU2.YUm2Rg.bh1NMpoUWZ9Xoo1MrAO-UCDSk9Y';
+const clientId  = '';  //Discord Application Client ID
+const guildId   = '421763216205414400';  //Discord Server ID **Reminder - put this in a seperate file for all the servers that utilize it
+
 const PREFIX ='%';
 var servers = {};
-
-const ytdl = require("ytdl-core");
 
 //Event Handling
 const eventFiles = fs.readdirSync('./events').filter(file => file.endsWith('.js'));
@@ -26,6 +28,7 @@ for (const file of eventFiles) {
 	}
 }
 
+//Need to install FFmpeg on linux and fix the following code -Sammy
 client.on('message',message =>{
 
     let args = message.content.substring(PREFIX.length).split(" ");
