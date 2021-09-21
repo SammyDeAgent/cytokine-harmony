@@ -30,6 +30,9 @@ const client = new Client(
     }
 );
 
+const player = createAudioPlayer();
+var connection = {};
+
 const clientId  = '';  //Discord Application Client ID
 const guildId   = '421763216205414400';  //Discord Server ID **Reminder - put this in a seperate file for all the servers that utilize it -Sammy
 
@@ -118,36 +121,60 @@ for (const file of eventFiles) {
 client.on('messageCreate', async message =>{
     if(message.author.bot) return;
     if(!message.member.voice.channel) return;
+    if(!message.content.startsWith('%')) return;
+
+    let args = message.content.substring(PREFIX.length).split(" ");
+
+    switch(args[0]){
+        case 'play':
+            connection = joinVoiceChannel({
+                channelId: message.member.voice.channel.id,
+                guildId: message.guild.id,
+                adapterCreator: message.guild.voiceAdapterCreator
+            });
+            const subscription = connection.subscribe(player);
+            player.play(createAudioResource('./mp3/01.mp3'));
+            message.reply("Playing required music.");
+            break;
+        case 'stop':
+            try{
+                player.stop();
+                connection.destroy();
+                message.reply("Have a nice day.");
+            }catch(error){
+                message.reply("Superposition unidentified.");
+            }
+            break;
+        case 'leave':
+            try{
+                connection.destroy();
+                message.reply("Exiting.");
+            }catch(error){
+                message.reply("Superposition unidentified.");
+            }
+            break;
+        default:
+            message.reply("Unknown command.");
+            break;
+    }
+})
+
+//Player Idling
+player.on(AudioPlayerStatus.Idle, ()=>{
     const connection = joinVoiceChannel({
         channelId: message.member.voice.channel.id,
         guildId: message.guild.id,
         adapterCreator: message.guild.voiceAdapterCreator
     });
-    const player = createAudioPlayer();
-    const subscription = connection.subscribe(player);
-    let args = message.content.substring(PREFIX.length).split(" ");
-    switch(args[0]){
-        case 'play':
-            player.play(createAudioResource('./mp3/01.mp3'));
-            message.reply("Playing required music.");
-            break;
-        case 'stop':
-            player.stop();
-            connection.destroy();
-            message.reply("Have a nice day.");
-            break;
-    }
-    player.on(AudioPlayerStatus.Idle, ()=>{
-        player.stop();
-        connection.destroy();
-    })
+    player.stop();
+    connection.destroy();
 })
 
 //Testing
-client.on('message', async message => {
+client.on('messageCreate', async message => {
     if(message.author.bot) return;
     if (message.content === 'Hello there') {
-        message.channel.send("General Kenobi");
+        message.reply("General Kenobi");
     }
 });
 
