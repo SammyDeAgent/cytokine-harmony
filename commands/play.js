@@ -49,12 +49,12 @@ module.exports = {
       let resource = createAudioResource(stream, {
         inlineVolume: true
       });
-      resource.volume.setVolume(0.25);
+      resource.volume.setVolume(0.2);
 
       connection.subscribe(player);
       player.play(resource);
 
-      await interaction.reply("```Playin!```");
+      await interaction.reply(`Playing - ${url}`);
     }
   },
 };
