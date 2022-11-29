@@ -15,9 +15,16 @@ module.exports = {
     .setName('play')
     .setDescription(
       "Join a channel and plays external source media"
-    ),
+    ).addStringOption(option =>
+		    option.setName('url')
+			    .setDescription('Youtube URL')
+			    .setRequired(true)
+        ),
   async execute(interaction) {
+
+    const url = await interaction.options.getString("url");
     const voiceChannel = interaction.guild.members.cache.get(interaction.member.user.id).voice.channel;
+
     if(!voiceChannel) {
       await interaction.reply("```You need to be in a Channel to execute this command.```");
     }else{
@@ -31,8 +38,11 @@ module.exports = {
       });
 
       // Change this to input
-      const stream = ytdl('https://www.youtube.com/watch?v=3CFQYmP5ZVg', {
-        filter: 'audioonly'
+      const stream = ytdl(url, {
+        filter: 'audioonly',
+        opusEncoded: true,
+        dlChunkSize: 0,
+        highWaterMark: 1 << 25,
       });
       const player = createAudioPlayer();
 
