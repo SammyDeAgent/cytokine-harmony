@@ -20,9 +20,9 @@ module.exports = {
     .setDescription(
       "Join a channel and plays external source media"
     ).addStringOption(option =>
-		    option.setName('query')
-			    .setDescription('Search term YT')
-			    .setRequired(true)
+      option.setName('query')
+        .setDescription('Search term YT')
+        .setRequired(true)
     ),
   async execute(interaction) {
 
@@ -35,15 +35,15 @@ module.exports = {
 
       // Joins the user's channel
       var connection = getVoiceConnection(interaction.guildId);
-      
-      if(!connection) {
+
+      if (!connection) {
         connection = joinVoiceChannel({
           channelId: voiceChannel.id,
           guildId: interaction.guildId,
           adapterCreator: interaction.guild.voiceAdapterCreator,
         });
       }
-      
+
       // Check for "CONNECT" and "SPEAK" permissions
 
       const videoFinder = async (query) => {
@@ -51,19 +51,15 @@ module.exports = {
         return (videoResult.videos.length > 1) ? videoResult.videos[0] : null;
       }
 
-      const query = await interaction.options.getString("query")
-      const video = await videoFinder(query);
+
+      // Retrieving the string behind /play
+      const query = await interaction.options.getString("query");
+
+      
+      // Check the query if matches a url
+      const video = /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(query) ? { url: query } : await videoFinder(query);
 
       if (video) {
-        // const stream = ytdl(video.url, {
-        //   fmt: "mp3",
-        //   highWaterMark: 1 << 62,
-        //   liveBuffer: 1 << 62,
-        //   dlChunkSize: 0, //disabling chunking is recommended in discord bot
-        //   bitrate: 128,
-        //   quality: "lowestaudio",
-        // });
-
         const stream = await ytdl.stream(video.url);
 
         let resource = createAudioResource(stream.stream, {
@@ -85,7 +81,7 @@ module.exports = {
         await interaction.editReply({
           content: `Playing - ${video.url}`
         });
-      }else {
+      } else {
         await interaction.reply("```Could not find any search results.```");
       }
     }

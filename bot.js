@@ -87,8 +87,8 @@ client.on('interactionCreate', async interaction => {
 		// Global Command *Deployment on all server, this function is slow
 		await rest.put(
 			Routes.applicationCommands(clientId), {
-				body: commands
-			},
+			body: commands
+		},
 		);
 
 		console.log('Successfully reloaded application (/) commands.');

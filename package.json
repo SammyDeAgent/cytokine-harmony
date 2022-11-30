@@ -16,7 +16,7 @@
     "yt-search": "^2.10.3",
     "ytdl-core": "^4.11.2"
   },
-  "main":"bot.js",
+  "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
   }
