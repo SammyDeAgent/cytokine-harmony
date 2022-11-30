@@ -5,6 +5,7 @@ const {
   joinVoiceChannel,
   createAudioPlayer,
   createAudioResource,
+  AudioPlayerStatus,
   generateDependencyReport
 } = require('@discordjs/voice');
 const ytdl = require('ytdl-core');
@@ -16,45 +17,53 @@ module.exports = {
     .setDescription(
       "Join a channel and plays external source media"
     ).addStringOption(option =>
-		    option.setName('url')
-			    .setDescription('Youtube URL')
+		    option.setName('query')
+			    .setDescription('Search term YT')
 			    .setRequired(true)
-        ),
+    ),
   async execute(interaction) {
 
-    const url = await interaction.options.getString("url");
     const voiceChannel = interaction.guild.members.cache.get(interaction.member.user.id).voice.channel;
-
-    if(!voiceChannel) {
+    if (!voiceChannel) {
       await interaction.reply("```You need to be in a Channel to execute this command.```");
-    }else{
+    } else {
 
-      // Check for "CONNECT" and "SPEAK" permissions
-
+      // Joins the user's channel
       const connection = joinVoiceChannel({
         channelId: voiceChannel.id,
         guildId: interaction.guildId,
         adapterCreator: interaction.guild.voiceAdapterCreator,
       });
 
-      // Change this to input
-      const stream = ytdl(url, {
-        filter: 'audioonly',
-        opusEncoded: true,
-        dlChunkSize: 0,
-        highWaterMark: 1 << 25,
-      });
-      const player = createAudioPlayer();
+      // Check for "CONNECT" and "SPEAK" permissions
 
-      let resource = createAudioResource(stream, {
-        inlineVolume: true
-      });
-      resource.volume.setVolume(0.2);
+      const videoFinder = async (query) => {
+        const videoResult = await ytSearch(query);
+        return (videoResult.videos.length > 1) ? videoResult.videos[0] : null;
+      }
 
-      connection.subscribe(player);
-      player.play(resource);
+      const video = await videoFinder(interaction.options.getString("query"));
+      if (video) {
+        const stream = ytdl(video.url, {
+          filter: 'audioonly',
+          opusEncoded: true,
+          dlChunkSize: 0,
+          highWaterMark: 1 << 25,
+        });
+        const player = createAudioPlayer();
 
-      await interaction.reply(`Playing - ${url}`);
+        let resource = createAudioResource(stream, {
+          inlineVolume: true
+        });
+        resource.volume.setVolume(0.1);
+
+        connection.subscribe(player);
+        player.play(resource);
+
+        await interaction.reply(`Playing - ${video.url}`);
+      }else {
+        await interaction.reply("```Could not find any search results.```");
+      }
     }
   },
 };
