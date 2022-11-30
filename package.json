@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@discordjs/opus": "^0.5.3",
+    "@discordjs/opus": "^0.9.0",
     "@discordjs/rest": "^1.4.0",
     "@discordjs/voice": "^0.6.0",
     "discord": "^0.8.2",
@@ -11,6 +11,8 @@
     "libsodium-wrappers": "^0.7.9",
     "nodemon": "^2.0.12",
     "opusscript": "^0.0.8",
+    "play-dl": "^1.9.6",
+    "pm2": "^5.2.2",
     "yt-search": "^2.10.3",
     "ytdl-core": "^4.11.2"
   }
