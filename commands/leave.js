@@ -28,7 +28,7 @@ module.exports = {
       // Joins the user's channel
       const connection = getVoiceConnection(interaction.guildId);
 
-      if(!connection) {
+      if (!connection) {
         await interaction.reply("```Harmony is currently not in any channel.```");
       } else {
         connection.destroy();
