@@ -14,6 +14,10 @@ const {
 const ytdl = require('play-dl');
 const ytSearch = require('yt-search');
 
+// Importing Queue Class
+const Queue = require('../queue/queueClass.js');
+const musicQueue = new Queue();
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
@@ -46,6 +50,8 @@ module.exports = {
 
       // Check for "CONNECT" and "SPEAK" permissions
 
+      // Used when query word is provided instead of url
+      // Returns object with url and other stuff
       const videoFinder = async (query) => {
         const videoResult = await ytSearch(query);
         return (videoResult.videos.length > 1) ? videoResult.videos[0] : null;
@@ -55,12 +61,21 @@ module.exports = {
       // Retrieving the string behind /play
       const query = await interaction.options.getString("query");
 
-      
+
       // Check the query if matches a url
+      // If url given, directly pass URL
+      // Otherwise pass in url returned by videoFinder
       const video = /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(query) ? { url: query } : await videoFinder(query);
 
       if (video) {
+
+        // Make a stream obj from url
         const stream = await ytdl.stream(video.url);
+
+        // First add
+        // if (musicQueue.isEmpty()) {
+        //   musicQueue.push(stream);
+        // }
 
         let resource = createAudioResource(stream.stream, {
           inlineVolume: true,
@@ -74,13 +89,16 @@ module.exports = {
           }
         });
 
+        // Add song finished event
+        
+
         connection.subscribe(player);
         player.play(resource);
 
-        // await interaction.reply(`Playing - ${video.url}`);
         await interaction.editReply({
           content: `Playing - ${video.url}`
         });
+
       } else {
         await interaction.reply("```Could not find any search results.```");
       }
