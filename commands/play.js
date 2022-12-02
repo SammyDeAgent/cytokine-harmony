@@ -137,20 +137,15 @@ module.exports = {
           });
         }
 
-        console.log(video);
         const channel_key = (video.author.url).split("/")[(video.author.url).split("/").length-1];
         var isUser = (/^[@].*$/.test(channel_key)) ? true : false;
         var channel_id; 
-        
-        console.log(isUser, channel_key);
 
         if(isUser) {
           channel_id = await ytc_data_name(channel_key.substring(1));
         }else{
           channel_id = channel_key;
         }
-
-        console.log(await channel_id);
 
         const ytc_url = await ytc_data_id(await channel_id);
 
