@@ -1,5 +1,8 @@
 const {
-  SlashCommandBuilder
+  MessageEmbed,
+} = require('discord.js')
+const {
+  SlashCommandBuilder,
 } = require('@discordjs/builders');
 const {
   joinVoiceChannel,
@@ -13,6 +16,7 @@ const {
 // const ytdl = require('ytdl-core');
 const ytdl = require('play-dl');
 const ytSearch = require('yt-search');
+const axios = require('axios');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -28,7 +32,10 @@ module.exports = {
 
     await interaction.deferReply();
 
-    const voiceChannel = await interaction.guild.members.cache.get(interaction.member.user.id).voice.channel;
+    const sender = interaction.member.user;
+
+    const voiceChannel = await interaction.guild.members.cache.get(sender.id).voice.channel;
+
     if (!voiceChannel) {
       await interaction.reply("```You need to be in a Channel to execute this command.```");
     } else {
@@ -51,14 +58,16 @@ module.exports = {
         return (videoResult.videos.length > 1) ? videoResult.videos[0] : null;
       }
 
-
       // Retrieving the string behind /play
       const query = await interaction.options.getString("query");
 
       
       // Check the query if matches a url
-      const video = /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(query) ? { url: query } : await videoFinder(query);
-
+      const video = 
+        /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(query) ? 
+          await videoFinder(encodeURI(query)):
+          await videoFinder(query);
+      
       if (video) {
         const stream = await ytdl.stream(video.url);
 
@@ -77,9 +86,109 @@ module.exports = {
         connection.subscribe(player);
         player.play(resource);
 
+        // Reply Embed + API call for YT Channel Picture
+        const ytc_data_id = async (keyword, api_key = process.env.G_KEY) => {
+          return await axios.get(
+            'https://www.googleapis.com/youtube/v3/channels',
+            {
+              params: {
+                  part: 'snippet',
+                  id: keyword ?? ' ',
+                  key: api_key,
+              },
+              headers: {
+                'content-type': 'application/json,charset=UTF-8',
+                'accept-encoding': '*',
+              },
+              responseType: 'json',
+              responseEncoding: 'utf8',
+            }
+          ).then(function(res){
+            try{
+               return res.data.items[0].snippet.thumbnails.default.url ?? undefined;
+            }catch(error){
+               return undefined;
+            }          
+          });
+        }
+
+        const ytc_data_name = async (keyword, api_key = process.env.G_KEY) => {
+          return await axios.get(
+            'https://www.googleapis.com/youtube/v3/channels', 
+            {
+              params: {
+                part: 'id',
+                forUsername: keyword,
+                key: api_key,
+              },
+              headers: {
+                'content-type': 'application/json,charset=UTF-8',
+                'accept-encoding': '*',
+              },
+              responseType: 'json',
+              responseEncoding: 'utf8',
+            }
+          ).then(function (res) {
+            try{
+              return res.data.items[0].id;
+            }catch(error) {
+              return undefined;
+            }
+          });
+        }
+
+        console.log(video);
+        const channel_key = (video.author.url).split("/")[(video.author.url).split("/").length-1];
+        var isUser = (/^[@].*$/.test(channel_key)) ? true : false;
+        var channel_id; 
+        
+        console.log(isUser, channel_key);
+
+        if(isUser) {
+          channel_id = await ytc_data_name(channel_key.substring(1));
+        }else{
+          channel_id = channel_key;
+        }
+
+        console.log(await channel_id);
+
+        const ytc_url = await ytc_data_id(await channel_id);
+
+        const embed = new MessageEmbed()
+          .setColor(0xffff00)
+          .setTitle(video.title)
+          .setURL(video.url)
+          .setAuthor(
+            video.author.name,
+            ytc_url ?? 'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
+            video.author.url
+          )
+          .setDescription(video.description)
+          .setThumbnail(video.thumbnail)
+          .addField(
+            'Views',
+            video.views.toString() || 'N/A',
+            true
+          )
+          .addField(
+            'Length',
+            video.timestamp,
+            true
+          )
+          .addField(
+            'Uploaded',
+            video.ago || 'N/A',
+            true
+          )
+          .setTimestamp()
+          .setFooter(
+            `Requested by ${sender.username}#${sender.discriminator}`,
+            `https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
+          );
+
         // await interaction.reply(`Playing - ${video.url}`);
         await interaction.editReply({
-          content: `Playing - ${video.url}`
+          embeds: [embed]
         });
       } else {
         await interaction.reply("```Could not find any search results.```");

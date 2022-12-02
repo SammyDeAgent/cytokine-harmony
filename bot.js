@@ -28,8 +28,7 @@ const client = new Client({
 });
 client.commands = new Collection();
 
-const clientId = '889823032154157056'; //Discord Application Client ID
-// const guildId = '421763216205414400'; //Discord Server ID **Reminder - put this in a seperate file for all the servers that utilize it -Sammy
+const clientId = 	process.env.CLIENT_ID; //Discord Application Client ID
 
 var commands = [];
 
@@ -97,5 +96,5 @@ client.on('interactionCreate', async interaction => {
 	}
 })();
 
-//Client Setup
+// Client Setup
 client.login(process.env.TOKEN);
