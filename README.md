@@ -3,5 +3,7 @@ Personal Discord Bot - Cytokine
 
 Environmental Variable File Content:
 ```
-TOKEN=Client_ID
+CLIENT_ID=BOT_CLIENT_ID
+TOKEN=BOT_TOKEN
+G_KEY=YOUR_GOOGLE_API_KEY
 ```
