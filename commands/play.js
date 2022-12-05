@@ -57,10 +57,8 @@ module.exports = {
         return (videoResult.videos.length > 1) ? videoResult.videos[0] : null;
       }
 
-
       // Retrieving the string behind /play
       const query = await interaction.options.getString("query");
-
 
       // Check the query if matches a url
       // If url given, directly pass URL
@@ -70,30 +68,34 @@ module.exports = {
       if (video) {
 
         // Make a stream obj from url
-        const stream = await ytdl.stream(video.url);
+        let stream = await ytdl.stream(video.url);
 
-        // First add
-        // if (musicQueue.isEmpty()) {
-        //   musicQueue.push(stream);
-        // }
+        // Add stream object to queue
+        musicQueue.addSong(stream);
 
-        let resource = createAudioResource(stream.stream, {
-          inlineVolume: true,
-          inputType: stream.type,
-        });
-        resource.volume.setVolume(0.1);
-
+        // Create player object
         const player = createAudioPlayer({
           behaviors: {
             noSubscriber: NoSubscriberBehavior.Play
           }
         });
 
-        // Add song finished event
-        
+        // Listener to check for song fin
+        player.on(AudioPlayerStatus.Idle, () => {
+          musicQueue.rmFinSong();
+
+          if (!musicQueue.isEmpty()) {
+            let curStream = musicQueue.getNextSong();
+            playerPlay(curStream, player);
+          } else {
+            console.log("No more songs in queue");
+          }
+
+        });
 
         connection.subscribe(player);
-        player.play(resource);
+
+        playerPlay(stream, player);
 
         await interaction.editReply({
           content: `Playing - ${video.url}`
@@ -105,3 +107,14 @@ module.exports = {
     }
   },
 };
+
+function playerPlay(stream, player) {
+  let resource = createAudioResource(stream.stream, {
+    inlineVolume: true,
+    inputType: stream.type,
+  });
+
+  resource.volume.setVolume(0.1);
+
+  player.play(resource);
+}

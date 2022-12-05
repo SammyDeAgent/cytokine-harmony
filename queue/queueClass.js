@@ -5,6 +5,16 @@ class Queue {
 
     addSong(stream) {
         this.musicQueue.push(stream);
+        console.log(`Added new song; Current size: ${this.size()}`);
+    }
+
+    rmFinSong() {
+        // Remove from the first of queue
+        this.musicQueue.shift();
+    }
+
+    getNextSong() {
+        return this.musicQueue[0];
     }
 
     size() {
