@@ -18,6 +18,10 @@ const ytdl = require('play-dl');
 const ytSearch = require('yt-search');
 const axios = require('axios');
 
+// Importing Queue Class
+const Queue = require('../queue/queueClass.js');
+const musicQueue = new Queue();
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
@@ -37,7 +41,7 @@ module.exports = {
     const voiceChannel = await interaction.guild.members.cache.get(sender.id).voice.channel;
 
     if (!voiceChannel) {
-      await interaction.reply("```You need to be in a Channel to execute this command.```");
+      await interaction.editReply("```You need to be in a Channel to execute this command.```");
     } else {
 
       // Joins the user's channel
@@ -53,6 +57,8 @@ module.exports = {
 
       // Check for "CONNECT" and "SPEAK" permissions
 
+      // Used when query word is provided instead of url
+      // Returns object with url and other stuff
       const videoFinder = async (query) => {
         const videoResult = await ytSearch(query);
         return (videoResult.videos.length > 1) ? videoResult.videos[0] : null;
@@ -61,30 +67,44 @@ module.exports = {
       // Retrieving the string behind /play
       const query = await interaction.options.getString("query");
 
-      
       // Check the query if matches a url
       const video = 
         /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(query) ? 
           await videoFinder(encodeURI(query)):
           await videoFinder(query);
-      
+
+      // Create player object
+      const player = createAudioPlayer({
+        behaviors: {
+          noSubscriber: NoSubscriberBehavior.Play
+        }
+      });
+
       if (video) {
-        const stream = await ytdl.stream(video.url);
 
-        let resource = createAudioResource(stream.stream, {
-          inlineVolume: true,
-          inputType: stream.type,
-        });
-        resource.volume.setVolume(0.1);
+        // Make a stream obj from url
+        let stream = await ytdl.stream(video.url);
 
-        const player = createAudioPlayer({
-          behaviors: {
-            noSubscriber: NoSubscriberBehavior.Play
+        // Add stream object to queue
+        musicQueue.addSong(stream);
+
+        // Listener to check for song fin
+        player.on(AudioPlayerStatus.Idle, () => {
+          musicQueue.rmFinSong();
+
+          if (!musicQueue.isEmpty()) {
+            let curStream = musicQueue.getNextSong();
+            playerPlay(curStream, player);
+          } else {
+            console.log("No more songs in queue");
           }
+
         });
 
         connection.subscribe(player);
-        player.play(resource);
+
+        // Play the very first incoming music req.
+        playerPlay(stream, player);
 
         // Reply Embed + API call for YT Channel Picture
         const ytc_data_id = async (keyword, api_key = process.env.G_KEY) => {
@@ -137,57 +157,25 @@ module.exports = {
           });
         }
 
-        const channel_key = (video.author.url).split("/")[(video.author.url).split("/").length-1];
-        var isUser = (/^[@].*$/.test(channel_key)) ? true : false;
-        var channel_id; 
-
-        if(isUser) {
-          channel_id = await ytc_data_name(channel_key.substring(1));
-        }else{
-          channel_id = channel_key;
-        }
-
-        const ytc_url = await ytc_data_id(await channel_id);
-
-        const embed = new MessageEmbed()
-          .setColor(0xffff00)
-          .setTitle(video.title)
-          .setURL(video.url)
-          .setAuthor(
-            video.author.name,
-            ytc_url ?? 'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
-            video.author.url
-          )
-          .setDescription(video.description)
-          .setThumbnail(video.thumbnail)
-          .addField(
-            'Views',
-            video.views.toString() || 'N/A',
-            true
-          )
-          .addField(
-            'Length',
-            video.timestamp,
-            true
-          )
-          .addField(
-            'Uploaded',
-            video.ago || 'N/A',
-            true
-          )
-          .setTimestamp()
-          .setFooter(
-            `Requested by ${sender.username}#${sender.discriminator}`,
-            `https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
-          );
-
         // await interaction.reply(`Playing - ${video.url}`);
         await interaction.editReply({
           embeds: [embed]
         });
+
       } else {
-        await interaction.reply("```Could not find any search results.```");
+        await interaction.editReply("```Could not find any search results.```");
       }
     }
   },
 };
+
+function playerPlay(stream, player) {
+  let resource = createAudioResource(stream.stream, {
+    inlineVolume: true,
+    inputType: stream.type,
+  });
+
+  resource.volume.setVolume(0.1);
+
+  player.play(resource);
+}

@@ -10,7 +10,7 @@
     "ffmpeg-static": "^4.4.1",
     "fs": "^0.0.1-security",
     "libsodium-wrappers": "^0.7.9",
-    "nodemon": "^2.0.12",
+    "nodemon": "^2.0.20",
     "opusscript": "^0.0.8",
     "play-dl": "^1.9.6",
     "pm2": "^5.2.2",
