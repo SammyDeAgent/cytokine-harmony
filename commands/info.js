@@ -10,7 +10,7 @@ module.exports = {
     ),
   async execute(interaction) {
     await interaction.reply(
-      "```This bot is created by SammyDeAgent and its sole purpose is to broadcast music from external source.```"
+      "```This bot is created by SammyDeAgent in collaboration with Dubu; its sole purpose is to broadcast music from external source.```"
     );
   },
 };
