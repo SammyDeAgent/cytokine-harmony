@@ -18,9 +18,14 @@ const ytdl = require('play-dl');
 const ytSearch = require('yt-search');
 const axios = require('axios');
 
+// const Client = require('../bot.js');
+
 // Importing Queue Class
 const Queue = require('../class/queueClass.js');
-const musicQueue = new Queue();
+const playlist = new Queue();
+
+// Variable
+let player = null;
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -37,7 +42,7 @@ module.exports = {
     await interaction.deferReply();
 
     const sender = interaction.member.user;
-
+    const msgChannel = await interaction.channelId;
     const voiceChannel = await interaction.guild.members.cache.get(sender.id).voice.channel;
 
     if (!voiceChannel) {
@@ -55,6 +60,36 @@ module.exports = {
           guildId: interaction.guildId,
           adapterCreator: interaction.guild.voiceAdapterCreator,
         });
+        
+
+        player = createAudioPlayer({
+          behaviors: {
+            noSubscriber: NoSubscriberBehavior.Idle
+          }
+        });
+
+        // Idling event handler
+        player.on(AudioPlayerStatus.Idle, async () => {
+
+          playlist.rmFinSong();
+
+          if (!playlist.isEmpty()) {
+            let curStream = playlist.getNextSong();
+
+            playerPlay(curStream.stream, player);
+
+            // Reply Embed + API call for YT Channel Picture
+            let channel_key = (curStream.video.author.url).split("/")[(curStream.video.author.url).split("/").length - 1];
+            let embed = await generateEmbed(channel_key, curStream.video, curStream.sender);
+
+            await interaction.guild.channels.cache.get(msgChannel).send({
+              embeds: [embed]
+            })
+          }
+        });
+
+      }else {
+        player = connection._state.subscription.player;
       }
 
       // Check for "CONNECT" and "SPEAK" permissions
@@ -75,47 +110,54 @@ module.exports = {
         await videoFinder(encodeURI(query)) :
         await videoFinder(query);
 
-      // Create player object
-      const player = createAudioPlayer({
-        behaviors: {
-          noSubscriber: NoSubscriberBehavior.Idle
-        }
-      });
-
       if (video) {
+
+        // Checking if player is currently playing a song
+        // Queue up the song if the player is currently playing
+        // Play next song on idle
 
         // Make a stream obj from url
         let stream = await ytdl.stream(video.url);
 
-        // // Add stream object to queue
-        // musicQueue.addSong(stream);
+        let status = player.state.status;
 
-        // // Listener to check for song fin
-        // player.on(AudioPlayerStatus.Idle, () => {
-        //   musicQueue.rmFinSong();
+        console.log(status);
 
-        //   if (!musicQueue.isEmpty()) {
-        //     let curStream = musicQueue.getNextSong();
-        //     playerPlay(curStream, player);
-        //   } else {
-        //     console.log("No more songs in queue");
-        //   }
+        if(status == 'playing') {
 
-        // });
+          playlist.addSong({
+            stream, 
+            video,
+            sender,
+            msgChannel
+          });
 
-        connection.subscribe(player);
+          await interaction.editReply(`Added **${video.title}** to playlist.`);
 
-        // Play the very first incoming music req.
-        playerPlay(stream, player);
+        } else {
 
-        // Reply Embed + API call for YT Channel Picture
-        const channel_key = (video.author.url).split("/")[(video.author.url).split("/").length - 1];
-        const embed = await generateEmbed(channel_key, video, sender);
-        
-        // await interaction.reply(`Playing - ${video.url}`);
-        await interaction.editReply({
-          embeds: [embed]
-        });
+          playlist.addSong({
+            stream,
+            video,
+            sender,
+            msgChannel
+          });
+          
+          connection.subscribe(player);
+
+          // Play the very first incoming music req.
+          playerPlay(stream, player);
+
+          // Reply Embed + API call for YT Channel Picture
+          let channel_key = (video.author.url).split("/")[(video.author.url).split("/").length - 1];
+          let embed = await generateEmbed(channel_key, video, sender);
+
+          await interaction.editReply({
+            embeds: [embed]
+          });
+
+          
+        }
 
       } else {
         await interaction.editReply("```Could not find any search results.```");

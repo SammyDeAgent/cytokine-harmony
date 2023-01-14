@@ -1,4 +1,5 @@
 {
+  "version": "0.2.0",
   "dependencies": {
     "@discordjs/opus": "^0.9.0",
     "@discordjs/rest": "^1.4.0",
