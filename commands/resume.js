@@ -12,9 +12,9 @@ const {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('leave')
+    .setName('resume')
     .setDescription(
-      "Leave the voice channel and terminate connection"
+      "Resume the current audio player"
     ),
   async execute(interaction) {
 
@@ -26,13 +26,18 @@ module.exports = {
       // Get the connection status of the channel
       const connection = getVoiceConnection(interaction.guildId);
 
-      if (!connection) {
+      if(!connection) {
         await interaction.reply("```Harmony is currently not in any channel.```");
-      } else {
-        connection.destroy();
-        await interaction.reply("```Connection Terminated.```");
-      }
+      }else {
+        const player = connection._state.subscription.player;
 
+        if (player._state.status == 'paused') {
+          player.unpause();
+          await interaction.reply("```Resumed Harmony's audio player.```");
+        } else {
+          await interaction.reply("```Harmony's audio player is currently not in PAUSED state.```");
+        }
+      }
     }
   }
 };

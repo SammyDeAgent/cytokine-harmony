@@ -12,9 +12,9 @@ const {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('leave')
+    .setName('skip')
     .setDescription(
-      "Leave the voice channel and terminate connection"
+      "Skip the audio player's current audio stream"
     ),
   async execute(interaction) {
 
@@ -26,13 +26,14 @@ module.exports = {
       // Get the connection status of the channel
       const connection = getVoiceConnection(interaction.guildId);
 
-      if (!connection) {
+      if(!connection) {
         await interaction.reply("```Harmony is currently not in any channel.```");
-      } else {
-        connection.destroy();
-        await interaction.reply("```Connection Terminated.```");
-      }
+      }else {
+        const player = connection._state.subscription.player;
+        player.stop();
 
+        await interaction.reply("```Skipped the current audio stream.```");
+      }
     }
   }
 };

@@ -12,9 +12,9 @@ const {
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('leave')
+    .setName('list')
     .setDescription(
-      "Leave the voice channel and terminate connection"
+      "Show the current added songs in the playlist"
     ),
   async execute(interaction) {
 
@@ -29,10 +29,15 @@ module.exports = {
       if (!connection) {
         await interaction.reply("```Harmony is currently not in any channel.```");
       } else {
-        connection.destroy();
-        await interaction.reply("```Connection Terminated.```");
-      }
+        const player = connection._state.subscription.player;
 
+        if(player.playlist.size() === 0) {
+          await interaction.reply("```Current playlist is empty.```");
+        } else {
+          await interaction.reply(player.playlist.list());
+        }
+
+      }
     }
   }
 };

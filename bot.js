@@ -98,3 +98,6 @@ client.on('interactionCreate', async interaction => {
 
 // Client Setup
 client.login(process.env.TOKEN);
+
+// Module export
+// exports.Client = client;
