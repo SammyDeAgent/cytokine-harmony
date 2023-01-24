@@ -15,17 +15,16 @@ const {
   generateDependencyReport
 } = require('@discordjs/voice');
 const ytdl = require('play-dl');
-const ytSearch = require('yt-search');
+const ytSearch = require('youtube-sr').default;
 const axios = require('axios');
 
 // const Client = require('../bot.js');
 
 // Importing Queue Class
 const Queue = require('../class/queueClass.js');
-const playlist = new Queue();
 
 // Variable
-let player = null;
+var player = null;
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -68,18 +67,20 @@ module.exports = {
           }
         });
 
+        player.playlist = new Queue();
+
         // Idling event handler
         player.on(AudioPlayerStatus.Idle, async () => {
 
-          playlist.rmFinSong();
+          player.playlist.rmFinSong();
 
-          if (!playlist.isEmpty()) {
-            let curStream = playlist.getNextSong();
+          if (!player.playlist.isEmpty()) {
+            let curStream = player.playlist.getNextSong();
 
             playerPlay(curStream.stream, player);
 
             // Reply Embed + API call for YT Channel Picture
-            let channel_key = (curStream.video.author.url).split("/")[(curStream.video.author.url).split("/").length - 1];
+            let channel_key = (curStream.video.channel.url).split("/")[(curStream.video.channel.url).split("/").length - 1];
             let embed = await generateEmbed(channel_key, curStream.video, curStream.sender);
 
             await interaction.guild.channels.cache.get(msgChannel).send({
@@ -93,13 +94,6 @@ module.exports = {
       }
 
       // Check for "CONNECT" and "SPEAK" permissions
-
-      // Used when query word is provided instead of url
-      // Returns object with url and other stuff
-      const videoFinder = async (query) => {
-        const videoResult = await ytSearch(query);
-        return (videoResult.videos.length > 1) ? videoResult.videos[0] : null;
-      }
 
       // Retrieving the string behind /play
       const query = await interaction.options.getString("query");
@@ -119,13 +113,9 @@ module.exports = {
         // Make a stream obj from url
         let stream = await ytdl.stream(video.url);
 
-        let status = player.state.status;
+        if (player.state.status == 'playing') {
 
-        console.log(status);
-
-        if(status == 'playing') {
-
-          playlist.addSong({
+          player.playlist.addSong({
             stream, 
             video,
             sender,
@@ -136,7 +126,7 @@ module.exports = {
 
         } else {
 
-          playlist.addSong({
+          player.playlist.addSong({
             stream,
             video,
             sender,
@@ -149,7 +139,7 @@ module.exports = {
           playerPlay(stream, player);
 
           // Reply Embed + API call for YT Channel Picture
-          let channel_key = (video.author.url).split("/")[(video.author.url).split("/").length - 1];
+          let channel_key = (video.channel.url).split("/")[(video.channel.url).split("/").length - 1];
           let embed = await generateEmbed(channel_key, video, sender);
 
           await interaction.editReply({
@@ -166,6 +156,19 @@ module.exports = {
   },
 };
 
+// Used when query word is provided instead of url
+// Returns object with url and other stuff
+async function videoFinder(query) {
+  try {
+    let videoResult = await ytSearch.searchOne(query);
+    let res = await ytSearch.getVideo(videoResult.url);
+    videoResult.description = res.description.substring(0, trimlength = 127) + "..." ?? "N/A";
+    return videoResult;
+  } catch(err) {
+    return null;
+  }
+}
+  
 async function generateEmbed(channel_key, video, sender) {
 
   const ytc_data_id = async (keyword, api_key = process.env.G_KEY) => {
@@ -228,12 +231,12 @@ async function generateEmbed(channel_key, video, sender) {
     .setTitle(video.title)
     .setURL(video.url)
     .setAuthor(
-      video.author.name,
+      video.channel.name,
       ytc_url ?? 'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
-      video.author.url
+      video.channel.url
     )
-    .setDescription(video.description)
-    .setThumbnail(video.thumbnail)
+    .setDescription(video.description ?? 'N/A')
+    .setThumbnail(video.thumbnail.url)
     .addField(
       'Views',
       video.views.toLocaleString("en-US") || 'N/A',
@@ -241,12 +244,12 @@ async function generateEmbed(channel_key, video, sender) {
     )
     .addField(
       'Length',
-      video.timestamp,
+      video.durationFormatted,
       true
     )
     .addField(
       'Uploaded',
-      video.ago || 'N/A',
+      video.uploadedAt || 'N/A',
       true
     )
     .setTimestamp()

@@ -5,7 +5,6 @@ class Queue {
 
     addSong(stream) {
         this.musicQueue.push(stream);
-        console.log(`Added new song; Current size: ${this.size()}`);
     }
 
     rmFinSong() {
@@ -23,6 +22,18 @@ class Queue {
 
     isEmpty() {
         return this.size() === 0;
+    }
+
+    list() {
+        let builder = '';
+        let counter = 1;
+        for(let listing of this.musicQueue) {
+            builder += `${counter}. ${listing.video.title}`;
+            if(counter == 1) builder += ` <PLAYING>`;
+            builder += `\n`;
+            counter++;
+        }
+        return "```md\n" + builder + "```";
     }
 }
 

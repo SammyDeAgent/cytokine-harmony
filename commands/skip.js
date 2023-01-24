@@ -9,13 +9,12 @@ const {
   AudioPlayerStatus,
   generateDependencyReport
 } = require('@discordjs/voice');
-const Queue = require('../class/queueClass');
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('clear')
+    .setName('skip')
     .setDescription(
-      "Clear the entire playlist and remake anew"
+      "Skip the audio player's current audio stream"
     ),
   async execute(interaction) {
 
@@ -27,14 +26,13 @@ module.exports = {
       // Get the connection status of the channel
       const connection = getVoiceConnection(interaction.guildId);
 
-      if (!connection) {
+      if(!connection) {
         await interaction.reply("```Harmony is currently not in any channel.```");
-      } else {
+      }else {
         const player = connection._state.subscription.player;
-        player.playlist = new Queue();
         player.stop();
 
-        await interaction.reply("```Destroyed and remade Harmony's playlist.```");
+        await interaction.reply("```Skipped the current audio stream.```");
       }
     }
   }
