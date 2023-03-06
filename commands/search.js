@@ -14,7 +14,7 @@ const {
   AudioPlayerStatus,
   generateDependencyReport
 } = require('@discordjs/voice');
-const playdl = require('play-dl');
+const ytdl = require('play-dl');
 const ytSearch = require('youtube-sr').default;
 const axios = require('axios');
 
@@ -22,16 +22,15 @@ const axios = require('axios');
 
 // Importing Queue Class
 const Queue = require('../class/queueClass.js');
-const { connect } = require('pm2');
 
 // Variable
 var player = null;
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('play')
+    .setName('search')
     .setDescription(
-      "Join a channel and plays external source media"
+      "Search up to 10 songs to add into the playlist"
     ).addStringOption(option =>
       option.setName('query')
       .setDescription('Search term YT')
@@ -44,11 +43,9 @@ module.exports = {
     const sender = interaction.member.user;
     const msgChannel = await interaction.channelId;
     const voiceChannel = await interaction.guild.members.cache.get(sender.id).voice.channel;
-
+  
     if (!voiceChannel) {
-      await interaction.editReply({
-        content: "```You need to be in a Channel to execute this command.```"
-      });
+      await interaction.editReply("```You need to be in a Channel to execute this command.```");
     } else {
 
       // Get the connection status of the channel
@@ -61,20 +58,6 @@ module.exports = {
           adapterCreator: interaction.guild.voiceAdapterCreator,
         });
 
-        // 06/03/2022 - API Fix
-        connection.on('stateChange', (oldState, newState) => {
-          const oldNetworking = Reflect.get(oldState, 'networking');
-          const newNetworking = Reflect.get(newState, 'networking');
-
-          const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
-            const newUdp = Reflect.get(newNetworkState, 'udp');
-            clearInterval(newUdp?.keepAliveInterval);
-          }
-
-          oldNetworking?.off('stateChange', networkStateChangeHandler);
-          newNetworking?.on('stateChange', networkStateChangeHandler);
-        });
-        
         player = createAudioPlayer({
           behaviors: {
             noSubscriber: NoSubscriberBehavior.Idle
@@ -105,84 +88,82 @@ module.exports = {
           }
         });
 
-      }else {
+        // player.on('error', async (error) => {
+        //   console.log('Warning! Something went wrong.');
+        //   console.log(player.playlist);
+        //   console.log(error);
+        // });
+        
+      } else {
         player = connection._state.subscription.player;
       }
 
       // Check for "CONNECT" and "SPEAK" permissions
 
-      // Retrieving the string behind /play
+      // Retrieving the string behind /search
       const query = await interaction.options.getString("query");
 
       // Check the query if matches a url
-      const video =
+      const searchList =
         /(http|https):\/\/(\w+:{0,1}\w*)?(\S+)(:[0-9]+)?(\/|\/([\w#!:.?+=&%!\-\/]))?/.test(query) ?
-        await videoFinder(encodeURI(query)) :
-        await videoFinder(query);
+        await searchFinder(encodeURI(query)) :
+        await searchFinder(query);
 
-      if (video) {
-
-        // Checking if player is currently playing a song
-        // Queue up the song if the player is currently playing
-        // Play next song on idle
-
-        // Make a stream obj from url
-        let stream = await playdl.stream(video.url);
-
-        if (player.state.status == 'playing') {
-
-          player.playlist.addSong({
-            stream, 
-            video,
-            sender,
-            msgChannel
-          });
-
-          await interaction.editReply(`Added **${video.title}** to playlist.`);
-
-        } else {
-
-          player.playlist.addSong({
-            stream,
-            video,
-            sender,
-            msgChannel
-          });
-
-          // Play the very first incoming music req.
-          playerPlay(stream, player);
-
-          // Reply Embed + API call for YT Channel Picture
-          let channel_key = (video.channel.url).split("/")[(video.channel.url).split("/").length - 1];
-          let embed = await generateEmbed(channel_key, video, sender);
-
-          await interaction.editReply({
-            embeds: [embed]
-          });
-
-          
-        }
-
-      } else {
-        await interaction.editReply("```Could not find any search results.```");
-      }
+      await interaction.editReply({
+        embeds: [await generateSearchEmbed(searchList, sender)]
+      });
     }
-  },
+  }
 };
 
-// Used when query word is provided instead of url
-// Returns object with url and other stuff
+async function generateSearchEmbed(list, sender) {
+
+  let listMsg = ``;
+  for(i in list) {
+    listMsg += `${parseInt(i)+1} - [${list[i].title}](${list[i].url}) \n`;
+  }
+
+  let embed = new MessageEmbed()
+    .setColor(0x00ffff)
+    .setTitle(`Search List`)
+    .addField(
+      'Found Results',
+      listMsg,
+      false
+    ).setTimestamp()
+    .setFooter(
+      `Seached by ${sender.username}#${sender.discriminator}`,
+      `https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
+    );
+
+  return embed;
+}
+
+async function searchFinder(query) {
+  try {
+    let videoResult = await ytSearch.search(query, {limit: 10});
+    return videoResult.map((item) => (
+      {
+        title: item.title,
+        url: item.url
+      }
+    ));
+  } catch (err) {
+    return null;
+  }
+}
+
 async function videoFinder(query) {
   try {
     let videoResult = await ytSearch.searchOne(query);
     let res = await ytSearch.getVideo(videoResult.url);
     videoResult.description = res.description.substring(0, trimlength = 127) + "..." ?? "N/A";
     return videoResult;
-  } catch(err) {
+  } catch (err) {
     return null;
   }
 }
-  
+
 async function generateEmbed(channel_key, video, sender) {
 
   const ytc_data_id = async (keyword, api_key = process.env.G_KEY) => {
@@ -233,10 +214,10 @@ async function generateEmbed(channel_key, video, sender) {
     });
   }
 
-  const channel_id = 
-    (/^[@].*$/.test(channel_key)) ? 
-      await ytc_data_name(channel_key.substring(1)) : 
-      channel_key;
+  const channel_id =
+    (/^[@].*$/.test(channel_key)) ?
+    await ytc_data_name(channel_key.substring(1)) :
+    channel_key;
 
   const ytc_url = await ytc_data_id(await channel_id);
 
