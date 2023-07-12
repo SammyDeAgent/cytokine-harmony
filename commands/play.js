@@ -22,7 +22,6 @@ const axios = require('axios');
 
 // Importing Queue Class
 const Queue = require('../class/queueClass.js');
-const { connect } = require('pm2');
 
 // Variable
 var player = null;
@@ -31,7 +30,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('play')
     .setDescription(
-      "Join a channel and plays external source media"
+      "Join a channel and plays from YT search result"
     ).addStringOption(option =>
       option.setName('query')
       .setDescription('Search term YT')
@@ -185,6 +184,9 @@ async function videoFinder(query) {
   
 async function generateEmbed(channel_key, video, sender) {
 
+  // Obtaining channel picture from old and new youtube profile url
+  // Unless someone figure out something else, DONT REMOVE THIS
+
   const ytc_data_id = async (keyword, api_key = process.env.G_KEY) => {
     return await axios.get(
       'https://www.googleapis.com/youtube/v3/channels', {
@@ -245,31 +247,39 @@ async function generateEmbed(channel_key, video, sender) {
     .setTitle(video.title)
     .setURL(video.url)
     .setAuthor(
-      video.channel.name,
-      ytc_url ?? 'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
-      video.channel.url
+      {
+        name: video.channel.name,
+        url: video.channel.url,
+        iconURL: ytc_url ?? 'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
+      }
     )
     .setDescription(video.description ?? 'N/A')
     .setThumbnail(video.thumbnail.url)
-    .addField(
-      'Views',
-      video.views.toLocaleString("en-US") || 'N/A',
-      true
-    )
-    .addField(
-      'Length',
-      video.durationFormatted,
-      true
-    )
-    .addField(
-      'Uploaded',
-      video.uploadedAt || 'N/A',
-      true
+    .addFields(
+      [
+        {
+          name: 'Views',
+          value: video.views.toLocaleString("en-US") || 'N/A',
+          inline: true
+        },
+        {
+          name: 'Length',
+          value: video.durationFormatted,
+          inline: true
+        },
+        {
+          name: 'Uploaded',
+          value: video.uploadedAt || 'N/A',
+          inline: true
+        }
+      ]
     )
     .setTimestamp()
     .setFooter(
-      `Requested by ${sender.username}#${sender.discriminator}`,
-      `https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
+      {
+        text:`Requested by ${sender.username}`,
+        iconURL:`https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
+      }
     );
 
   return embed;
@@ -281,7 +291,7 @@ function playerPlay(stream, player) {
     inputType: stream.type,
   });
 
-  resource.volume.setVolume(0.1);
+  resource.volume.setVolume(0.2);
 
   player.play(resource);
 }

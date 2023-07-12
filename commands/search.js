@@ -30,7 +30,7 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName('search')
     .setDescription(
-      "Search up to 10 songs to add into the playlist"
+      "Search up to 10 songs from YT search"
     ).addStringOption(option =>
       option.setName('query')
       .setDescription('Search term YT')
