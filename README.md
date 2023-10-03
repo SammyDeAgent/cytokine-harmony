@@ -1,5 +1,5 @@
 # Cytokine Harmony
-Personal Discord Bot - Cytokine
+Personal Discord Bot - Cytokine - Audio
 
 Environmental Variable File Content:
 ```

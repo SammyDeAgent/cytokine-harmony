@@ -1,4 +1,7 @@
 const {
+  MessageEmbed,
+} = require('discord.js')
+const {
   SlashCommandBuilder
 } = require('@discordjs/builders');
 const {
@@ -34,10 +37,44 @@ module.exports = {
         if(player.playlist.size() === 0) {
           await interaction.reply("```Current playlist is empty.```");
         } else {
-          await interaction.reply(player.playlist.list());
+
+          let playlist = player.playlist.list();
+
+          let embed = await generateListEmbed(playlist);
+
+          await interaction.reply({
+            embeds: [embed]
+          });
         }
 
       }
     }
   }
 };
+
+async function generateListEmbed(playlist) {
+  const embed = new MessageEmbed()
+    .setColor(0x050100)
+    .setTitle("Current Playlist")
+    .setDescription("> Playlist can be expanded via **PLAY**, skipped via **SKIP**, remove particular listing via **REMOVE** or cleared completely via **CLEAR**.")
+
+  for(track of playlist) {
+
+    let embedName = "";
+
+    if(track.id == 1) {
+      embedName = `${track.id} - ${track.title}` + " `PLAYING`";
+    } else {
+      embedName = `${track.id} - ${track.title}`;
+    }
+
+    let embedValue = `[${track.channelName}](${track.channelURL}) [[${track.duration}](${track.videoURL})] - Requested By **${track.senderName}**`;
+
+    embed.addFields({
+      name: embedName,
+      value: embedValue
+    })
+  }
+
+  return embed;
+}

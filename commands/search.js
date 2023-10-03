@@ -58,6 +58,20 @@ module.exports = {
           adapterCreator: interaction.guild.voiceAdapterCreator,
         });
 
+        // 06/03/2022 - API Fix
+        connection.on('stateChange', (oldState, newState) => {
+          const oldNetworking = Reflect.get(oldState, 'networking');
+          const newNetworking = Reflect.get(newState, 'networking');
+
+          const networkStateChangeHandler = (oldNetworkState, newNetworkState) => {
+            const newUdp = Reflect.get(newNetworkState, 'udp');
+            clearInterval(newUdp?.keepAliveInterval);
+          }
+
+          oldNetworking?.off('stateChange', networkStateChangeHandler);
+          newNetworking?.on('stateChange', networkStateChangeHandler);
+        });
+
         player = createAudioPlayer({
           behaviors: {
             noSubscriber: NoSubscriberBehavior.Idle
@@ -87,12 +101,6 @@ module.exports = {
             })
           }
         });
-
-        // player.on('error', async (error) => {
-        //   console.log('Warning! Something went wrong.');
-        //   console.log(player.playlist);
-        //   console.log(error);
-        // });
         
       } else {
         player = connection._state.subscription.player;
@@ -126,14 +134,21 @@ async function generateSearchEmbed(list, sender) {
   let embed = new MessageEmbed()
     .setColor(0x00ffff)
     .setTitle(`Search List`)
-    .addField(
-      'Found Results',
-      listMsg,
-      false
-    ).setTimestamp()
+    .addFields(
+      [
+        {
+          name: 'Found Results',
+          value: listMsg,
+          inline: false
+        }
+      ]
+    )
+    .setTimestamp()
     .setFooter(
-      `Seached by ${sender.username}#${sender.discriminator}`,
-      `https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
+      {
+        text: `Seached by ${sender.username}`,
+        iconURL: `https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
+      }
     );
 
   return embed;
