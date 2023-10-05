@@ -1,6 +1,8 @@
 // Module Imports
 const {
   MessageEmbed,
+  MessageActionRow,
+  MessageSelectMenu
 } = require('discord.js')
 const {
   SlashCommandBuilder,
@@ -38,7 +40,9 @@ module.exports = {
     ),
   async execute(interaction) {
 
-    await interaction.deferReply();
+    await interaction.deferReply({
+      ephemeral: true
+    });
 
     const sender = interaction.member.user;
     const msgChannel = await interaction.channelId;
@@ -117,14 +121,39 @@ module.exports = {
         await searchFinder(encodeURI(query)) :
         await searchFinder(query);
 
-      await interaction.editReply({
-        embeds: [await generateSearchEmbed(searchList, sender)]
-      });
+      if(searchList) {
+        const dropdownInsert = new MessageActionRow()
+          .addComponents(
+            new MessageSelectMenu()
+            .setCustomId("search_select")
+            .setPlaceholder("Select a track to insert")
+          )
+        
+        const dropdownBuilder = [];
+        for(item of searchList) {
+          dropdownBuilder.push({
+            label: `Result - ${item.id}`,
+            description: `${item.title}`,
+            value: `${item.url}`,
+          })
+        }
+  
+        dropdownInsert.components[0].addOptions(dropdownBuilder);
+  
+        await interaction.editReply({
+          embeds: [await generateSearchEmbed(searchList)],
+          components: [dropdownInsert],
+        });
+      }else {
+        await interaction.editReply("```Could not find any search results.```");
+      }
+        
     }
+
   }
 };
 
-async function generateSearchEmbed(list, sender) {
+async function generateSearchEmbed(list) {
 
   let listMsg = ``;
   for(i in list) {
@@ -134,22 +163,17 @@ async function generateSearchEmbed(list, sender) {
   let embed = new MessageEmbed()
     .setColor(0x00ffff)
     .setTitle(`Search List`)
-    .addFields(
-      [
-        {
-          name: 'Found Results',
-          value: listMsg,
-          inline: false
-        }
-      ]
-    )
-    .setTimestamp()
-    .setFooter(
-      {
-        text: `Seached by ${sender.username}`,
-        iconURL: `https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
-      }
-    );
+    .setDescription("> Select a track to insert via Drop Menu")
+
+  for (item of list) {
+    let embedName = `${item.id} - ${item.title}`;
+    let embedValue = `[${item.channelName}](${item.channelURL}) [[${item.duration}](${item.url})]`;
+
+    embed.addFields({
+      name: embedName,
+      value: embedValue
+    })
+  }
 
   return embed;
 }
@@ -157,10 +181,17 @@ async function generateSearchEmbed(list, sender) {
 async function searchFinder(query) {
   try {
     let videoResult = await ytSearch.search(query, {limit: 10});
+
+    let searchID = 1;
+
     return videoResult.map((item) => (
       {
+        id: searchID++,
         title: item.title,
-        url: item.url
+        url: item.url,
+        duration: item.durationFormatted,
+        channelName: item.channel.name,
+        channelURL: item.channel.url
       }
     ));
   } catch (err) {
@@ -168,18 +199,10 @@ async function searchFinder(query) {
   }
 }
 
-async function videoFinder(query) {
-  try {
-    let videoResult = await ytSearch.searchOne(query);
-    let res = await ytSearch.getVideo(videoResult.url);
-    videoResult.description = res.description.substring(0, trimlength = 127) + "..." ?? "N/A";
-    return videoResult;
-  } catch (err) {
-    return null;
-  }
-}
-
 async function generateEmbed(channel_key, video, sender) {
+
+  // Obtaining channel picture from old and new youtube profile url
+  // Unless someone figure out something else, DONT REMOVE THIS
 
   const ytc_data_id = async (keyword, api_key = process.env.G_KEY) => {
     return await axios.get(
@@ -240,36 +263,40 @@ async function generateEmbed(channel_key, video, sender) {
     .setColor(0xffff00)
     .setTitle(video.title)
     .setURL(video.url)
-    .setAuthor(
-      video.channel.name,
-      ytc_url ?? 'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
-      video.channel.url
-    )
+    .setAuthor({
+      name: video.channel.name,
+      url: video.channel.url,
+      iconURL: ytc_url ?? 'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
+    })
     .setDescription(video.description ?? 'N/A')
     .setThumbnail(video.thumbnail.url)
-    .addField(
-      'Views',
-      video.views.toLocaleString("en-US") || 'N/A',
-      true
-    )
-    .addField(
-      'Length',
-      video.durationFormatted,
-      true
-    )
-    .addField(
-      'Uploaded',
-      video.uploadedAt || 'N/A',
-      true
+    .addFields(
+      [{
+          name: 'Views',
+          value: video.views.toLocaleString("en-US") || 'N/A',
+          inline: true
+        },
+        {
+          name: 'Length',
+          value: video.durationFormatted,
+          inline: true
+        },
+        {
+          name: 'Uploaded',
+          value: video.uploadedAt || 'N/A',
+          inline: true
+        }
+      ]
     )
     .setTimestamp()
-    .setFooter(
-      `Requested by ${sender.username}#${sender.discriminator}`,
-      `https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
-    );
+    .setFooter({
+      text: `Requested by ${sender.username}`,
+      iconURL: `https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
+    });
 
   return embed;
 }
+
 
 function playerPlay(stream, player) {
   let resource = createAudioResource(stream.stream, {
