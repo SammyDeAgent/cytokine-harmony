@@ -122,13 +122,13 @@ module.exports = {
       if (video) {
 
         // Checking if player is currently playing a song
-        // Queue up the song if the player is currently playing
+        // Queue up the song if the player is currently playing or paused
         // Play next song on idle
 
         // Make a stream obj from url
         let stream = await playdl.stream(video.url);
 
-        if (player.state.status == 'playing') {
+        if (player.state.status == 'playing' || player.state.status == 'paused') {
 
           player.playlist.addSong({
             stream, 

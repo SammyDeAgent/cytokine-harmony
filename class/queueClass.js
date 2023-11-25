@@ -1,40 +1,55 @@
 class Queue {
-    constructor() {
-        this.musicQueue = [];
-    }
+	constructor() {
+		this.musicQueue = [];
+	}
 
-    addSong(stream) {
-        this.musicQueue.push(stream);
-    }
+	addSong(stream) {
+		this.musicQueue.push(stream);
+	}
 
-    rmFinSong() {
-        // Remove from the first of queue
-        this.musicQueue.shift();
-    }
+	removeSong(pos) {
+		// Splice Fx: index, quantity
+		return this.musicQueue.splice(pos, pos);
+	}
 
-    getNextSong() {
-        return this.musicQueue[0];
-    }
+	rmFinSong() {
+		// Remove from the first of queue
+		this.musicQueue.shift();
+	}
 
-    size() {
-        return this.musicQueue.length;
-    }
+	getNextSong() {
+		return this.musicQueue[0];
+	}
 
-    isEmpty() {
-        return this.size() === 0;
-    }
+	size() {
+		return this.musicQueue.length;
+	}
 
-    list() {
-        let builder = '';
-        let counter = 1;
-        for(let listing of this.musicQueue) {
-            builder += `${counter}. ${listing.video.title}`;
-            if(counter == 1) builder += ` <PLAYING>`;
-            builder += `\n`;
-            counter++;
-        }
-        return "```md\n" + builder + "```";
-    }
+	isEmpty() {
+		return this.size() === 0;
+	}
+
+	list() {
+		let array = [];
+		let counter = 1;
+		for (let listing of this.musicQueue) {
+			array.push({
+				id: counter,
+				title: listing.video.title,
+				desc: listing.video.description,
+				videoURL: listing.video.url,
+				duration: listing.video.durationFormatted,
+				uploaded: listing.video.uploadedAt,
+				views: listing.video.views,
+				thumbnailURL: listing.video.thumbnail.url,
+				channelName: listing.video.channel.name,
+				channelURL: listing.video.channel.url,
+				senderName: listing.sender.username
+			});
+			counter++;
+		}
+		return array;
+	}
 }
 
 module.exports = Queue
