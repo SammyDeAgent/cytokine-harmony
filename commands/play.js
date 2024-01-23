@@ -18,7 +18,11 @@ const playdl = require('play-dl');
 const ytSearch = require('youtube-sr').default;
 const axios = require('axios');
 
-// const Client = require('../bot.js');
+const {
+  generateEmbed,
+  videoFinder,
+  playerPlay
+} = require('./modules/common.js');
 
 // Importing Queue Class
 const Queue = require('../class/queueClass.js');
@@ -150,7 +154,7 @@ module.exports = {
 
           // Play the very first incoming music req.
           playerPlay(stream, player);
-
+          
           // Reply Embed + API call for YT Channel Picture
           let channel_key = (video.channel.url).split("/")[(video.channel.url).split("/").length - 1];
           let embed = await generateEmbed(channel_key, video, sender);
@@ -159,7 +163,6 @@ module.exports = {
             embeds: [embed]
           });
 
-          
         }
 
       } else {
@@ -168,130 +171,3 @@ module.exports = {
     }
   },
 };
-
-// Used when query word is provided instead of url
-// Returns object with url and other stuff
-async function videoFinder(query) {
-  try {
-    let videoResult = await ytSearch.searchOne(query);
-    let res = await ytSearch.getVideo(videoResult.url);
-    videoResult.description = res.description.substring(0, trimlength = 127) + "..." ?? "N/A";
-    return videoResult;
-  } catch(err) {
-    return null;
-  }
-}
-  
-async function generateEmbed(channel_key, video, sender) {
-
-  // Obtaining channel picture from old and new youtube profile url
-  // Unless someone figure out something else, DONT REMOVE THIS
-
-  const ytc_data_id = async (keyword, api_key = process.env.G_KEY) => {
-    return await axios.get(
-      'https://www.googleapis.com/youtube/v3/channels', {
-        params: {
-          part: 'snippet',
-          id: keyword ?? ' ',
-          key: api_key,
-        },
-        headers: {
-          'content-type': 'application/json,charset=UTF-8',
-          'accept-encoding': '*',
-        },
-        responseType: 'json',
-        responseEncoding: 'utf8',
-      }
-    ).then(function (res) {
-      try {
-        return res.data.items[0].snippet.thumbnails.default.url ?? undefined;
-      } catch (error) {
-        return undefined;
-      }
-    });
-  }
-
-  const ytc_data_name = async (keyword, api_key = process.env.G_KEY) => {
-    return await axios.get(
-      'https://www.googleapis.com/youtube/v3/channels', {
-        params: {
-          part: 'id',
-          forUsername: keyword,
-          key: api_key,
-        },
-        headers: {
-          'content-type': 'application/json,charset=UTF-8',
-          'accept-encoding': '*',
-        },
-        responseType: 'json',
-        responseEncoding: 'utf8',
-      }
-    ).then(function (res) {
-      try {
-        return res.data.items[0].id;
-      } catch (error) {
-        return undefined;
-      }
-    });
-  }
-
-  const channel_id = 
-    (/^[@].*$/.test(channel_key)) ? 
-      await ytc_data_name(channel_key.substring(1)) : 
-      channel_key;
-
-  const ytc_url = await ytc_data_id(await channel_id);
-
-  const embed = new MessageEmbed()
-    .setColor(0xffff00)
-    .setTitle(video.title)
-    .setURL(video.url)
-    .setAuthor(
-      {
-        name: video.channel.name,
-        url: video.channel.url,
-        iconURL: ytc_url ?? 'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
-      }
-    )
-    .setDescription(video.description ?? 'N/A')
-    .setThumbnail(video.thumbnail.url)
-    .addFields(
-      [
-        {
-          name: 'Views',
-          value: video.views.toLocaleString("en-US") || 'N/A',
-          inline: true
-        },
-        {
-          name: 'Length',
-          value: video.durationFormatted,
-          inline: true
-        },
-        {
-          name: 'Uploaded',
-          value: video.uploadedAt || 'N/A',
-          inline: true
-        }
-      ]
-    )
-    .setTimestamp()
-    .setFooter(
-      {
-        text:`Requested by ${sender.username}`,
-        iconURL:`https://cdn.discordapp.com/avatars/${sender.id}/${sender.avatar}`
-      }
-    );
-
-  return embed;
-}
-
-function playerPlay(stream, player) {
-  let resource = createAudioResource(stream.stream, {
-    inlineVolume: true,
-    inputType: stream.type,
-  });
-
-  resource.volume.setVolume(0.2);
-
-  player.play(resource);
-}

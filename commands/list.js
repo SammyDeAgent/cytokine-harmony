@@ -13,6 +13,10 @@ const {
   generateDependencyReport
 } = require('@discordjs/voice');
 
+const {
+  generateListEmbed
+} = require('./modules/common.js');
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName('list')
@@ -51,30 +55,3 @@ module.exports = {
     }
   }
 };
-
-async function generateListEmbed(playlist) {
-  const embed = new MessageEmbed()
-    .setColor(0x050100)
-    .setTitle("Current Playlist")
-    .setDescription("> Playlist can be expanded via **PLAY**, skipped via **SKIP**, remove particular listing via **REMOVE** or cleared completely via **CLEAR**.")
-
-  for(track of playlist) {
-
-    let embedName = "";
-
-    if(track.id == 1) {
-      embedName = `${track.id} - ${track.title}` + " `PLAYING`";
-    } else {
-      embedName = `${track.id} - ${track.title}`;
-    }
-
-    let embedValue = `[${track.channelName}](${track.channelURL}) [[${track.duration}](${track.videoURL})] - Requested By **${track.senderName}**`;
-
-    embed.addFields({
-      name: embedName,
-      value: embedValue
-    })
-  }
-
-  return embed;
-}
