@@ -27,14 +27,17 @@ const client = new Client({
 	]
 });
 client.commands = new Collection();
-
-const clientId = 	process.env.CLIENT_ID; //Discord Application Client ID
-
 var commands = [];
+
+// Build Mode Initialization
+const build = process.env.BUILD;
+const clientId = (build == "DEV") ? process.env.CLIENT_ID_DEV : (build == "PROD") ? process.env.CLIENT_ID_PROD : null;
+const token = (build == "DEV") ? process.env.TOKEN_DEV : (build == "PROD") ? process.env.TOKEN_PROD : null;
+if(clientId == null || token == null) throw new Error("INVALID BUILD MODE");
 
 const rest = new REST({
 	version: '9'
-}).setToken(process.env.TOKEN);
+}).setToken(token);
 
 //Command Handling
 const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.js'));
@@ -97,7 +100,7 @@ client.on('interactionCreate', async interaction => {
 })();
 
 // Client Setup
-client.login(process.env.TOKEN);
+client.login(token);
 
 // Module export
 // exports.Client = client;
