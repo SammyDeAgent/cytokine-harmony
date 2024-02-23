@@ -1,22 +1,15 @@
 // Module Imports
 const {
-  MessageEmbed,
-} = require('discord.js')
-const {
   SlashCommandBuilder,
 } = require('@discordjs/builders');
 const {
   joinVoiceChannel,
   createAudioPlayer,
-  createAudioResource,
   getVoiceConnection,
   NoSubscriberBehavior,
   AudioPlayerStatus,
-  generateDependencyReport
 } = require('@discordjs/voice');
 const playdl = require('play-dl');
-const ytSearch = require('youtube-sr').default;
-const axios = require('axios');
 
 const {
   generateEmbed,
@@ -105,6 +98,10 @@ module.exports = {
             await interaction.guild.channels.cache.get(msgChannel).send({
               embeds: [embed]
             })
+          } else {
+            setTimeout(() => {
+              connection.destroy();
+            }, 10000);
           }
         });
 

@@ -1,8 +1,8 @@
 // Module Imports
 const {
-  MessageEmbed,
   MessageActionRow,
-  MessageSelectMenu
+  MessageSelectMenu,
+  MessageButton
 } = require('discord.js')
 const {
   SlashCommandBuilder,
@@ -10,15 +10,10 @@ const {
 const {
   joinVoiceChannel,
   createAudioPlayer,
-  createAudioResource,
   getVoiceConnection,
   NoSubscriberBehavior,
   AudioPlayerStatus,
-  generateDependencyReport
 } = require('@discordjs/voice');
-const ytdl = require('play-dl');
-const ytSearch = require('youtube-sr').default;
-const axios = require('axios');
 
 const {
   generateSearchEmbed,
@@ -108,6 +103,10 @@ module.exports = {
             await interaction.guild.channels.cache.get(msgChannel).send({
               embeds: [embed]
             })
+          } else {
+            setTimeout(() => {
+              connection.destroy();
+            }, 10000);
           }
         });
         
@@ -130,8 +129,8 @@ module.exports = {
         const dropdownInsert = new MessageActionRow()
           .addComponents(
             new MessageSelectMenu()
-            .setCustomId("search_select")
-            .setPlaceholder("Select a track to insert")
+              .setCustomId("search_select")
+              .setPlaceholder("Select a track to insert"),
           )
         
         const dropdownBuilder = [];
@@ -141,13 +140,21 @@ module.exports = {
             description: `${item.title}`,
             value: `${item.url}`,
           })
-        }
+        };
   
         dropdownInsert.components[0].addOptions(dropdownBuilder);
-  
+
+        const cancelBtn = new MessageActionRow()
+          .addComponents(
+            new MessageButton()
+              .setCustomId('search_cancel')
+              .setLabel('Cancel')
+              .setStyle('DANGER'),
+          )
+
         await interaction.editReply({
           embeds: [await generateSearchEmbed(searchList)],
-          components: [dropdownInsert],
+          components: [dropdownInsert, cancelBtn],
         });
       }else {
         await interaction.editReply("```Could not find any search results.```");

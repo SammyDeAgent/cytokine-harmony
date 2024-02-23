@@ -1,16 +1,8 @@
 const {
-  MessageEmbed,
-} = require('discord.js')
-const {
   SlashCommandBuilder
 } = require('@discordjs/builders');
 const {
-  joinVoiceChannel,
   getVoiceConnection,
-  createAudioPlayer,
-  createAudioResource,
-  AudioPlayerStatus,
-  generateDependencyReport
 } = require('@discordjs/voice');
 
 const {

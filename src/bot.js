@@ -1,7 +1,8 @@
-//Module Load
+// Module Load
 const {
 	REST
 } = require('@discordjs/rest');
+const { getVoiceConnection } = require('@discordjs/voice');
 const {
 	Routes
 } = require('discord-api-types/v9');
@@ -16,7 +17,7 @@ const fs = require('fs');
 
 dotenv.config();
 
-//Variable Initialization
+// Variable Initialization
 const client = new Client({
 	intents: [
 		Intents.FLAGS.GUILDS,
@@ -39,7 +40,7 @@ const rest = new REST({
 	version: '9'
 }).setToken(token);
 
-//Command Handling
+// Command Handling
 const commandFiles = fs.readdirSync('./src/commands').filter(file => file.endsWith('.js'));
 for (const file of commandFiles) {
 	const command = require(`./commands/${file}`);
@@ -47,7 +48,7 @@ for (const file of commandFiles) {
 	client.commands.set(command.data.name, command);
 }
 
-//Event Handling
+// Event Handling
 const eventFiles = fs.readdirSync('./src/events').filter(file => file.endsWith('.js'));
 for (const file of eventFiles) {
 	const event = require(`./events/${file}`);
@@ -58,7 +59,7 @@ for (const file of eventFiles) {
 	}
 }
 
-//Commands and Interactions
+// Commands and Interactions
 client.on('interactionCreate', async interaction => {
 	if (!interaction.isCommand()) return;
 	const command = client.commands.get(interaction.commandName);
@@ -74,7 +75,7 @@ client.on('interactionCreate', async interaction => {
 	}
 });
 
-//Loading Slash Commands
+// Loading Slash Commands
 (async () => {
 	try {
 		console.log('Started refreshing application (/) commands.');
