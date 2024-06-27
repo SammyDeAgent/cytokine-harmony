@@ -45,7 +45,11 @@ module.exports = {
     })
 
     if(video) {
-      let stream = await playdl.stream(url);
+      let stream = await playdl.stream(url, {
+        quality: 2,
+        precache: 3,
+        discordPlayerCompatibility: true
+      });
 
       if (player.state.status == 'playing' || player.state.status == 'paused') {
          player.playlist.addSong({

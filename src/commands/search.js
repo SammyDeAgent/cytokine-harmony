@@ -105,8 +105,9 @@ module.exports = {
             })
           } else {
             setTimeout(() => {
-              connection.destroy();
-            }, 10000);
+              if (player.playlist.isEmpty())
+                connection.destroy();
+            }, 30000);
           }
         });
         

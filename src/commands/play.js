@@ -100,8 +100,9 @@ module.exports = {
             })
           } else {
             setTimeout(() => {
-              connection.destroy();
-            }, 10000);
+              if(player.playlist.isEmpty())
+                connection.destroy();
+            }, 30000);
           }
         });
 
@@ -127,7 +128,11 @@ module.exports = {
         // Play next song on idle
 
         // Make a stream obj from url
-        let stream = await playdl.stream(video.url);
+        let stream = await playdl.stream(video.url, {
+          quality: 2,
+          precache: 3,
+          discordPlayerCompatibility: true
+        });
 
         if (player.state.status == 'playing' || player.state.status == 'paused') {
 

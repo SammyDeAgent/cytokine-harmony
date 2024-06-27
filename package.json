@@ -1,5 +1,5 @@
 {
-  "version": "0.8.2",
+  "version": "0.8.3",
   "dependencies": {
     "@discordjs/opus": "^0.9.0",
     "@discordjs/rest": "^1.7.1",
@@ -8,14 +8,15 @@
     "discord": "^0.8.2",
     "discord.js": "^13.16.0",
     "dotenv": "^10.0.0",
-    "ffmpeg-static": "^4.4.1",
+    "ffmpeg": "^0.0.4",
     "fs": "^0.0.1-security",
     "libsodium-wrappers": "^0.7.9",
     "nodemon": "^3.0.3",
     "opusscript": "^0.0.8",
-    "play-dl": "^1.9.6",
+    "play-dl": "github:Yoduh/play-dl-test",
     "pm2": "^5.2.2",
-    "youtube-sr": "^4.3.4"
+    "youtube-sr": "^4.3.4",
+    "ytdl-core": "^4.11.5"
   },
   "main": "src/bot.js",
   "scripts": {
