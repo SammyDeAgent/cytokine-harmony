@@ -38,61 +38,64 @@ module.exports = {
 
     // Obtaining channel picture from old and new youtube profile url
     // Unless someone figure out something else, DONT REMOVE THIS
+    // DEPRECATED - NO LONGER USES GOOGLE API KEY - 25/02/2025
 
-    const ytc_data_id = async (keyword, api_key = process.env.G_KEY) => {
-      return await axios.get(
-        'https://www.googleapis.com/youtube/v3/channels', {
-          params: {
-            part: 'snippet',
-            id: keyword ?? ' ',
-            key: api_key,
-          },
-          headers: {
-            'content-type': 'application/json,charset=UTF-8',
-            'accept-encoding': '*',
-          },
-          responseType: 'json',
-          responseEncoding: 'utf8',
-        }
-      ).then(function (res) {
-        try {
-          return res.data.items[0].snippet.thumbnails.default.url ?? undefined;
-        } catch (error) {
-          return undefined;
-        }
-      });
-    }
+    // const ytc_data_id = async (keyword, api_key = process.env.G_KEY) => {
+    //   return await axios.get(
+    //     'https://www.googleapis.com/youtube/v3/channels', {
+    //       params: {
+    //         part: 'snippet',
+    //         id: keyword ?? ' ',
+    //         key: api_key,
+    //       },
+    //       headers: {
+    //         'content-type': 'application/json,charset=UTF-8',
+    //         'accept-encoding': '*',
+    //       },
+    //       responseType: 'json',
+    //       responseEncoding: 'utf8',
+    //     }
+    //   ).then(function (res) {
+    //     try {
+    //       return res.data.items[0].snippet.thumbnails.default.url ?? undefined;
+    //     } catch (error) {
+    //       return undefined;
+    //     }
+    //   });
+    // }
 
-    const ytc_data_name = async (keyword, api_key = process.env.G_KEY) => {
-      return await axios.get(
-        'https://www.googleapis.com/youtube/v3/channels', {
-          params: {
-            part: 'id',
-            forUsername: keyword,
-            key: api_key,
-          },
-          headers: {
-            'content-type': 'application/json,charset=UTF-8',
-            'accept-encoding': '*',
-          },
-          responseType: 'json',
-          responseEncoding: 'utf8',
-        }
-      ).then(function (res) {
-        try {
-          return res.data.items[0].id;
-        } catch (error) {
-          return undefined;
-        }
-      });
-    }
+    // const ytc_data_name = async (keyword, api_key = process.env.G_KEY) => {
+    //   return await axios.get(
+    //     'https://www.googleapis.com/youtube/v3/channels', {
+    //       params: {
+    //         part: 'id',
+    //         forUsername: keyword,
+    //         key: api_key,
+    //       },
+    //       headers: {
+    //         'content-type': 'application/json,charset=UTF-8',
+    //         'accept-encoding': '*',
+    //       },
+    //       responseType: 'json',
+    //       responseEncoding: 'utf8',
+    //     }
+    //   ).then(function (res) {
+    //     try {
+    //       return res.data.items[0].id;
+    //     } catch (error) {
+    //       return undefined;
+    //     }
+    //   });
+    // }+-
 
-    const channel_id =
-      (/^[@].*$/.test(channel_key)) ?
-      await ytc_data_name(channel_key.substring(1)) :
-      channel_key;
+    // const channel_id =
+    //   (/^[@].*$/.test(channel_key)) ?
+    //   await ytc_data_name(channel_key.substring(1)) :
+    //   channel_key;
 
-    const ytc_url = await ytc_data_id(await channel_id);
+    // const ytc_url = await ytc_data_id(await channel_id);
+
+
 
     const embed = new MessageEmbed()
       .setColor(0xffff00)
@@ -101,7 +104,8 @@ module.exports = {
       .setAuthor({
         name: video.channel.name,
         url: video.channel.url,
-        iconURL: ytc_url??'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
+        iconURL: video.channel.icon.url
+        //iconURL: ytc_url??'https://yt3.ggpht.com/584JjRp5QMuKbyduM_2k5RlXFqHJtQ0qLIPZpwbUjMJmgzZngHcam5JMuZQxyzGMV5ljwJRl0Q=s176-c-k-c0x00ffffff-no-rj',
       })
       .setDescription(video.description ?? 'N/A')
       .setThumbnail(video.thumbnail.url)
@@ -163,9 +167,22 @@ module.exports = {
   // Returns object with url and other stuff
   videoFinder: async function(query) {
     try {
-      let videoResult = await ytSearch.searchOne(query);
-      let res = await ytSearch.getVideo(videoResult.url);
-      videoResult.description = res.description.substring(0, trimlength = 127) + "..." ?? "N/A";
+
+      let res, videoResult = null;
+
+      var ytUrlRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(?:-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?$/;
+
+      if(ytUrlRegex.test(query)) {
+        videoResult = await ytSearch.getVideo(query);
+        videoResult.description = videoResult.description.substring(0, trimlength = 127) + "..." ?? "N/A";
+      }else {
+        res = await ytSearch.searchOne(query);
+        videoResult = await ytSearch.getVideo(res);
+        videoResult.description = videoResult.description.substring(0, trimlength = 127) + "..." ?? "N/A";
+      }
+
+      // console.log(videoResult);
+
       return videoResult;
     } catch (err) {
       return null;
