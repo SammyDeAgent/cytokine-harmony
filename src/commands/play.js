@@ -9,7 +9,9 @@ const {
   NoSubscriberBehavior,
   AudioPlayerStatus,
 } = require('@discordjs/voice');
-const playdl = require('play-dl');
+// const playdl = require('play-dl');
+const playdl = require('ytdl-core');
+
 
 const {
   generateEmbed,
@@ -40,6 +42,12 @@ module.exports = {
     const sender = interaction.member.user;
     const msgChannel = await interaction.channelId;
     const voiceChannel = await interaction.guild.members.cache.get(sender.id).voice.channel;
+
+    //YD-DLP Initialization
+    const YTDlpWrap = require('yt-dlp-wrap').default;
+    let githubReleasesData = await YTDlpWrap.getGithubReleases(1, 5);
+    await YTDlpWrap.downloadFromGithub();
+    const ytDlpWrap = new YTDlpWrap();
 
     if (!voiceChannel) {
       await interaction.editReply({
@@ -73,7 +81,7 @@ module.exports = {
         
         player = createAudioPlayer({
           behaviors: {
-            noSubscriber: NoSubscriberBehavior.Idle
+            noSubscriber: NoSubscriberBehavior.Play
           }
         });
 
@@ -127,12 +135,26 @@ module.exports = {
         // Queue up the song if the player is currently playing or paused
         // Play next song on idle
 
+        
+        // // Make a stream obj from url
+        // let stream = await playdl.stream(video.url, {
+        //   quality: 2,
+        //   precache: 3,
+        //   discordPlayerCompatibility: true
+        // })  
+        
         // Make a stream obj from url
-        let stream = await playdl.stream(video.url, {
-          quality: 2,
-          precache: 3,
-          discordPlayerCompatibility: true
+        let stream = await playdl(video.url,{
+          filter: "audioonly",
+          quality: 'highestaudio',
+          highWaterMark: 1 << 25
         });
+
+        // let stream = ytDlpWrap.execStream([
+        //   video.url,
+        // ]);
+
+        // console.log(stream);
 
         if (player.state.status == 'playing' || player.state.status == 'paused') {
 

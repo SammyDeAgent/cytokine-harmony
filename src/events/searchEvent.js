@@ -9,7 +9,7 @@ const {
   playerPlay
 } = require('../commands/modules/common.js');
 
-const playdl = require('play-dl');
+const playdl = require('ytdl-core');
 
 module.exports = {
   name: 'interactionCreate',
@@ -45,10 +45,10 @@ module.exports = {
     })
 
     if(video) {
-      let stream = await playdl.stream(url, {
-        quality: 2,
-        precache: 3,
-        discordPlayerCompatibility: true
+      let stream = await playdl(video.url,{
+                filter: "audioonly",
+                quality: 'highestaudio',
+                highWaterMark: 1 << 25
       });
 
       if (player.state.status == 'playing' || player.state.status == 'paused') {
