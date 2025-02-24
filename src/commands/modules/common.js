@@ -194,7 +194,7 @@ module.exports = {
   },
 
   playerPlay: function(stream, player) {
-    let resource = createAudioResource(stream.stream, {
+    let resource = createAudioResource(stream, {
       inlineVolume: true,
       inputType: stream.type,
     });

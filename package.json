@@ -17,7 +17,8 @@
     "play-dl": "github:Yoduh/play-dl-test",
     "pm2": "^5.2.2",
     "youtube-sr": "^4.3.4",
-    "ytdl-core": "^4.11.5"
+    "yt-dlp-wrap": "^2.3.12",
+    "ytdl-core": "npm:@distube/ytdl-core@^4.16.4"
   },
   "main": "src/bot.js",
   "scripts": {
