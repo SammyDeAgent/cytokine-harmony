@@ -1,5 +1,5 @@
 module.exports = {
-	name: 'ready',
+	name: 'clientReady',
 	once: true,
 	execute(client) {
 		client.user.setActivity('Sea Waves', { type: 'LISTENING' });

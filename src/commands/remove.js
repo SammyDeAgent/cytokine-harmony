@@ -4,6 +4,9 @@ const {
 const {
   getVoiceConnection,
 } = require('@discordjs/voice');
+const {
+  generateListEmbed
+} = require('./modules/common.js');
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -35,19 +38,30 @@ module.exports = {
         let pos = await interaction.options.getNumber("position");
         
         if (pos <= 0 || pos > player.playlist.size()) {
-          await interaction.reply("```Invalid Queue Position```");
-
-        }else if(pos == 1) {
-          player.stop();
-          await interaction.reply("```Skipped the current audio stream.```");
+          await interaction.reply({
+            content: '```Invalid Queue Position.```',
+            // embeds: [embed]
+          });
 
         }else {
-          let removed = player.playlist.removeSong(pos - 1)[0];
+          (async () => {
+            if (pos == 1) {
+              player.stop();
+              await interaction.reply({
+                content: '```Skipped the current audio stream.```',
+                // embeds: [await generateListEmbed(player.playlist.list())]
+              });
 
-          await interaction.reply(`Removed **${removed.video.title}** from the playlist.`);
+            } else {
+              let removed = await player.playlist.removeSong(pos - 1)[0];
+              await interaction.reply({
+                content: `Removed **${removed.video.title}** from the playlist.`,
+                // embeds: [await generateListEmbed(player.playlist.list())]
+              });
+            }
+          })();
         }
-
       }
     }
-  }
-};
+  },
+}

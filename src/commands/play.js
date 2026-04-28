@@ -9,9 +9,36 @@ const {
   NoSubscriberBehavior,
   AudioPlayerStatus,
 } = require('@discordjs/voice');
-// const playdl = require('play-dl');
-const playdl = require('ytdl-core');
 
+// const playdl = require('play-dl');
+//const playdl = require('yt-stream');
+// const {YtDlp} = require('ytdlp-nodejs');
+// const playdl = new YtDlp();
+const {
+  PassThrough
+} = require('stream');
+const YtDlp = require('yt-dlp-wrap').default;
+const playdl = new YtDlp('./yt-dlp.exe');
+
+async function getVideoStream(videoUrl) {
+  try {
+    // Get the yt-dlp stream
+    const ytStream = playdl.execStream([
+      videoUrl,
+      '-f', 'bestaudio/best',
+      '--no-playlist'
+    ]);
+    // Wrap with PassThrough to set highWaterMark
+    const audioStream = new PassThrough({
+      highWaterMark: 1 << 25
+    }); // 32MB
+    ytStream.pipe(audioStream);
+    return audioStream;
+  } catch (error) {
+    console.error('Error getting video stream:', error);
+    return null;
+  }
+}
 
 const {
   generateEmbed,
@@ -43,11 +70,11 @@ module.exports = {
     const msgChannel = await interaction.channelId;
     const voiceChannel = await interaction.guild.members.cache.get(sender.id).voice.channel;
 
-    //YD-DLP Initialization
-    const YTDlpWrap = require('yt-dlp-wrap').default;
-    let githubReleasesData = await YTDlpWrap.getGithubReleases(1, 5);
-    await YTDlpWrap.downloadFromGithub();
-    const ytDlpWrap = new YTDlpWrap();
+    // //YD-DLP Initialization
+    // const YTDlpWrap = require('yt-dlp-wrap').default;
+    // let githubReleasesData = await YTDlpWrap.getGithubReleases(1, 5);
+    // await YTDlpWrap.downloadFromGithub();
+    // const ytDlpWrap = new YTDlpWrap();
 
     if (!voiceChannel) {
       await interaction.editReply({
@@ -105,10 +132,10 @@ module.exports = {
 
             await interaction.guild.channels.cache.get(msgChannel).send({
               embeds: [embed]
-            })
+            });
           } else {
             setTimeout(() => {
-              if(player.playlist.isEmpty())
+              if (player.playlist.isEmpty())
                 connection.destroy();
             }, 30000);
           }
@@ -129,6 +156,8 @@ module.exports = {
         await videoFinder(encodeURI(query)) :
         await videoFinder(query);
 
+      //console.log(video);
+
       if (video) {
 
         // Checking if player is currently playing a song
@@ -144,11 +173,20 @@ module.exports = {
         // })  
         
         // Make a stream obj from url
-        let stream = await playdl(video.url,{
-          filter: "audioonly",
-          quality: 'highestaudio',
-          highWaterMark: 1 << 25
-        });
+        // let stream = await playdl(video.url,{
+        //   filter: "audioonly",
+        //   quality: 'highestaudio',
+        //   highWaterMark: 1 << 25
+        // });
+        //console.log(video.url);
+        // let stream = await playdl.stream(video.url, {
+        //   quality: 'high',
+        //   type:'audio',
+        //   download: true,
+        //   highWaterMark: 1048576 * 32
+        // });
+
+        let stream = await getVideoStream(video.url);
 
         // let stream = ytDlpWrap.execStream([
         //   video.url,
@@ -164,7 +202,7 @@ module.exports = {
             sender,
             msgChannel
           });
-
+        
           await interaction.editReply(`Added **${video.title}** to playlist.`);
 
         } else {

@@ -2,7 +2,7 @@ const {
   SlashCommandBuilder
 } = require('@discordjs/builders');
 const {
-  MessageEmbed,
+  EmbedBuilder,
 } = require('discord.js')
 
 module.exports = {
@@ -15,7 +15,7 @@ module.exports = {
 
     const sender = interaction.member.user;
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor(0x4f7942)
       .setTitle("Cytokine Harmony")
       .setDescription("A loney music bot listening to sea waves.\nCreated by [Sammy](https://github.com/SammyDeAgent) with a surplus of tea.")

@@ -1,8 +1,8 @@
 // Module Imports
 const {
-  MessageActionRow,
-  MessageSelectMenu,
-  MessageButton
+  ActionRowBuilder,
+  StringSelectMenuBuilder,
+  ButtonBuilder
 } = require('discord.js')
 const {
   SlashCommandBuilder,
@@ -127,9 +127,9 @@ module.exports = {
         await searchFinder(query);
 
       if(searchList) {
-        const dropdownInsert = new MessageActionRow()
+        const dropdownInsert = new ActionRowBuilder()
           .addComponents(
-            new MessageSelectMenu()
+            new StringSelectMenuBuilder()
               .setCustomId("search_select")
               .setPlaceholder("Select a track to insert"),
           )
@@ -145,12 +145,12 @@ module.exports = {
   
         dropdownInsert.components[0].addOptions(dropdownBuilder);
 
-        const cancelBtn = new MessageActionRow()
+        const cancelBtn = new ActionRowBuilder()
           .addComponents(
-            new MessageButton()
+            new ButtonBuilder()
               .setCustomId('search_cancel')
               .setLabel('Cancel')
-              .setStyle('DANGER'),
+              .setStyle(4),
           )
 
         await interaction.editReply({

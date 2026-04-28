@@ -1,12 +1,12 @@
 // Module Imports
 const {
-  MessageEmbed,
+  EmbedBuilder,
 } = require('discord.js')
 const {
   createAudioResource,
 } = require('@discordjs/voice');
 const ytSearch = require('youtube-sr').default;
-const axios = require('axios');
+// const axios = require('axios');
 
 module.exports = {
 
@@ -16,7 +16,7 @@ module.exports = {
       listMsg += `${parseInt(i)+1} - [${list[i].title}](${list[i].url}) \n`;
     }
 
-    let embed = new MessageEmbed()
+    let embed = new EmbedBuilder()
       .setColor(0x00ffff)
       .setTitle(`Search List`)
       .setDescription("> Select a track to insert via Drop Menu")
@@ -97,7 +97,7 @@ module.exports = {
 
 
 
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor(0xffff00)
       .setTitle(video.title)
       .setURL(video.url)
@@ -137,7 +137,7 @@ module.exports = {
   },
 
   generateListEmbed: async function(playlist) {
-    const embed = new MessageEmbed()
+    const embed = new EmbedBuilder()
       .setColor(0x050100)
       .setTitle("Current Playlist")
       .setDescription("> Playlist can be expanded via **PLAY**, skipped via **SKIP**, remove particular listing via **REMOVE** or cleared completely via **CLEAR**.")
