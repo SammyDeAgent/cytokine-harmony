@@ -4,7 +4,6 @@ const {
 const {
   getVoiceConnection,
 } = require('@discordjs/voice');
-
 const {
   generateListEmbed
 } = require('./modules/common.js');

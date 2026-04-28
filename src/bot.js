@@ -8,7 +8,8 @@ const {
 } = require('discord-api-types/v9');
 const {
 	Client,
-	Intents,
+	GatewayIntentBits,
+	// Intents,
 	Collection
 } = require('discord.js');
 const wait = require('util').promisify(setTimeout);
@@ -20,11 +21,17 @@ dotenv.config();
 // Variable Initialization
 const client = new Client({
 	intents: [
-		Intents.FLAGS.GUILDS,
-		Intents.FLAGS.GUILD_MESSAGES,
-		Intents.FLAGS.GUILD_MEMBERS,
-		Intents.FLAGS.GUILD_PRESENCES,
-		Intents.FLAGS.GUILD_VOICE_STATES,
+		GatewayIntentBits.Guilds,
+		GatewayIntentBits.GuildMessages,
+		GatewayIntentBits.MessageContent,
+		GatewayIntentBits.GuildMembers,
+		GatewayIntentBits.GuildVoiceStates,
+		GatewayIntentBits.GuildPresences
+		// Intents.FLAGS.GUILDS,
+		// Intents.FLAGS.GUILD_MESSAGES,
+		// Intents.FLAGS.GUILD_MEMBERS,
+		// Intents.FLAGS.GUILD_PRESENCES,
+		// Intents.FLAGS.GUILD_VOICE_STATES,
 	]
 });
 client.commands = new Collection();
@@ -35,6 +42,11 @@ const build = process.env.BUILD;
 const clientId = (build == "DEV") ? process.env.CLIENT_ID_DEV : (build == "PROD") ? process.env.CLIENT_ID_PROD : null;
 const token = (build == "DEV") ? process.env.TOKEN_DEV : (build == "PROD") ? process.env.TOKEN_PROD : null;
 if(clientId == null || token == null) throw new Error("INVALID BUILD MODE");
+
+/* console.log(`BUILD MODE: ${build}`);
+console.log(`CLIENT ID: ${clientId}`);
+console.log(`TOKEN: ${token.substring(0, 10)}...`);
+ */
 
 const rest = new REST({
 	version: '9'
@@ -61,6 +73,9 @@ for (const file of eventFiles) {
 
 // Commands and Interactions
 client.on('interactionCreate', async interaction => {
+
+	//await interaction.deferReply();
+
 	if (!interaction.isCommand()) return;
 	const command = client.commands.get(interaction.commandName);
 	if (!command) return;
@@ -68,10 +83,14 @@ client.on('interactionCreate', async interaction => {
 		await command.execute(interaction);
 	} catch (error) {
 		console.error(error);
-		await interaction.reply({
+		try{
+		await interaction.editReply({
 			content: 'There was an error while executing this command!',
 			ephemeral: true
-		});
+		})}
+		catch (err) {
+			console.error(err);
+		}
 	}
 });
 
