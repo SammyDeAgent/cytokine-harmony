@@ -15,6 +15,7 @@ const {
 const wait = require('util').promisify(setTimeout);
 const dotenv = require("dotenv");
 const fs = require('fs');
+const logger = require('./commands/modules/logger.js')('bot.js');
 
 dotenv.config();
 
@@ -43,9 +44,9 @@ const clientId = (build == "DEV") ? process.env.CLIENT_ID_DEV : (build == "PROD"
 const token = (build == "DEV") ? process.env.TOKEN_DEV : (build == "PROD") ? process.env.TOKEN_PROD : null;
 if(clientId == null || token == null) throw new Error("INVALID BUILD MODE");
 
-/* console.log(`BUILD MODE: ${build}`);
-console.log(`CLIENT ID: ${clientId}`);
-console.log(`TOKEN: ${token.substring(0, 10)}...`);
+/* logger.info(`BUILD MODE: ${build}`);
+logger.info(`CLIENT ID: ${clientId}`);
+logger.info(`TOKEN: ${token.substring(0, 10)}...`);
  */
 
 const rest = new REST({
@@ -82,14 +83,14 @@ client.on('interactionCreate', async interaction => {
 	try {
 		await command.execute(interaction);
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 		try{
 		await interaction.editReply({
 			content: 'There was an error while executing this command!',
 			ephemeral: true
 		})}
 		catch (err) {
-			console.error(err);
+			logger.error(err);
 		}
 	}
 });
@@ -97,7 +98,7 @@ client.on('interactionCreate', async interaction => {
 // Loading Slash Commands
 (async () => {
 	try {
-		console.log('Started refreshing application (/) commands.');
+		logger.info('Started refreshing application (/) commands.');
 
 		// //Guild Command *Enable this for faster deployment
 		// await rest.put(
@@ -113,9 +114,9 @@ client.on('interactionCreate', async interaction => {
 		},
 		);
 
-		console.log('Successfully reloaded application (/) commands.');
+		logger.info('Successfully reloaded application (/) commands.');
 	} catch (error) {
-		console.error(error);
+		logger.error(error);
 	}
 })();
 

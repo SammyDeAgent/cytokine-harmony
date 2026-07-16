@@ -1,0 +1,2 @@
+[Harmony] 2026-07-16 11:40:20 PM +08 - [info]:[bot.js] Started refreshing application (/) commands.
+[Harmony] 2026-07-16 11:40:20 PM +08 - [info]:[bot.js] Successfully reloaded application (/) commands.
