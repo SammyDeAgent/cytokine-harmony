@@ -134,10 +134,10 @@ module.exports = {
               embeds: [embed]
             });
           } else {
-            setTimeout(() => {
-              if (player.playlist.isEmpty())
-                connection.destroy();
-            }, 30000);
+            // setTimeout(() => {
+            //   if (player.playlist.isEmpty())
+            //     connection.destroy();
+            // }, 30000);
           }
         });
 

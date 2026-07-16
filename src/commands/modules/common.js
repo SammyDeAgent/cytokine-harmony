@@ -7,6 +7,7 @@ const {
 } = require('@discordjs/voice');
 const ytSearch = require('youtube-sr').default;
 // const axios = require('axios');
+const logger = require('./logger.js')('common.js');
 
 module.exports = {
 
@@ -167,32 +168,41 @@ module.exports = {
   // Returns object with url and other stuff
   videoFinder: async function(query) {
     try {
-
+      logger.info(`Searching for video: ${query}`);
       let res, videoResult = null;
 
       var ytUrlRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(?:-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?$/;
 
       if(ytUrlRegex.test(query)) {
-        videoResult = await ytSearch.getVideo(query);
-        videoResult.description = videoResult.description.substring(0, trimlength = 127) + "..." ?? "N/A";
+        videoResult = await ytSearch.getVideo(query, {
+          extractorArgs: "youtube:player_client=default,-android_sdkless"
+        });
       }else {
         res = await ytSearch.searchOne(query);
-        videoResult = await ytSearch.getVideo(res);
-        videoResult.description = videoResult.description.substring(0, trimlength = 127) + "..." ?? "N/A";
+        videoResult = await ytSearch.getVideo(res, {
+          extractorArgs: "youtube:player_client=default,-android_sdkless"
+        });
       }
 
-      // console.log(videoResult);
-
+      if (videoResult.description != null) {
+        videoResult.description = videoResult.description.substring(0, trimlength = 127) + "..." ?? "N/A";
+      } else {
+        videoResult.description = "N/A";
+      }
+      
       return videoResult;
     } catch (err) {
+      logger.error("Error occurred while searching for video:", err);
       return null;
     }
   },
 
   searchFinder: async function(query){
     try {
+      logger.info(`Searching for listing: ${query}`);
       let videoResult = await ytSearch.search(query, {
-        limit: 10
+        limit: 10,
+        extractorArgs: "youtube:player_client=default,-android_sdkless"
       });
 
       let searchID = 1;
@@ -206,6 +216,7 @@ module.exports = {
         channelURL: item.channel.url
       }));
     } catch (err) {
+      logger.error("Error occurred while searching for video:", err);
       return null;
     }
   },
