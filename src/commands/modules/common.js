@@ -171,7 +171,8 @@ module.exports = {
       logger.info(`Searching for video: ${query}`);
       let res, videoResult = null;
 
-      var ytUrlRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(?:-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?$/;
+      // var ytUrlRegex = /^((?:https?:)?\/\/)?((?:www|m)\.)?((?:youtube(?:-nocookie)?\.com|youtu.be))(\/(?:[\w\-]+\?v=|embed\/|live\/|v\/)?)([\w\-]+)(\S+)?$/;
+      var ytUrlRegex = /(?:https?:\/\/)?(?:www\.|m\.)?(?:youtube\.com|youtu\.be)\//i;
 
       if(ytUrlRegex.test(query)) {
         videoResult = await ytSearch.getVideo(query, {
@@ -184,11 +185,13 @@ module.exports = {
         });
       }
 
-      if (videoResult.description != null) {
-        videoResult.description = videoResult.description.substring(0, trimlength = 127) + "..." ?? "N/A";
-      } else {
-        videoResult.description = "N/A";
+      if (!videoResult) {
+        return null;
       }
+
+      videoResult.description = videoResult.description
+        ? videoResult.description.substring(0, 127) + "..."
+        : "N/A";
       
       return videoResult;
     } catch (err) {

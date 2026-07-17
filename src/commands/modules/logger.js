@@ -43,10 +43,10 @@ module.exports = function (module) {
       logFormat
     ),
     transports: [
-      new transports.File({
-        filename: './log/combined.txt',
-        format: format.uncolorize()
-      }),
+      // new transports.File({
+      //   filename: './log/combined.txt',
+      //   format: format.uncolorize()
+      // }),
       new transports.Console()
     ],
     defaultMeta: {

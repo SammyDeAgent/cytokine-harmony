@@ -126,7 +126,7 @@ module.exports = {
         await searchFinder(encodeURI(query)) :
         await searchFinder(query);
 
-      if(searchList) {
+      if (Array.isArray(searchList) && searchList.length > 0) {
         const dropdownInsert = new ActionRowBuilder()
           .addComponents(
             new StringSelectMenuBuilder()
